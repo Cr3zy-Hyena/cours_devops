@@ -1,3 +1,4 @@
+# .github/workflows/ci-cd.yml
 name: CI/CD Pipeline Complet
 
 on:
@@ -15,3 +16,31 @@ jobs:
           python-version: '3.11'
       - run: pip install -r requirements.txt pytest
       - run: python -m pytest tests/ -v
+
+  build-and-push:
+    name: Build et Push Docker
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Se connecter a Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Construire et pousser l'image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mon-app:latest
+
+  notification:
+    name: Notification de succes
+    runs-on: ubuntu-latest
+    needs: [tests, build-and-push]
+    if: success()
+    steps:
+      - run: echo 'Pipeline termine avec succes ! Image publiee sur Docker Hub.'
