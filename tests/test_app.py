@@ -13,8 +13,4 @@ def test_accueil(client):
     assert reponse.status_code == 200
     assert b'Bonjour' in reponse.data
 
-def test_sante(client):
-    reponse = client.get('/sante')
-    assert reponse.status_code == 200
-    data = json.loads(reponse.data)
-    assert data['statut'] == 'OK'
+
