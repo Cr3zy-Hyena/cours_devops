@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def accueil():
-    return f'<h1>Bonjour {nom} !</h1><p>Version 1.0</p>'
+    return f'<h1>Bienvenue sur {nom} !</h1><p>Version 1.0</p>'
 
 
 @app.route('/sante')
