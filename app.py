@@ -1,5 +1,6 @@
 from flask import Flask
-
+import os
+nom=os.getenv('APP_NAME', 'DevOps App')
 app = Flask(__name__)
 
 
