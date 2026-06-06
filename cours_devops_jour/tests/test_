@@ -1,6 +1,6 @@
 import pytest
 import json
-from app import app
+from new_app import app
 @pytest.fixture
 def client():
 	app.config['TESTING'] = True
