@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <title>Calculatrice JSON</title>
+  </head>
+  <body>
+    <h1>Calculatrice simple</h1>
+    <label>a: <input id="a" type="number" value="3"></label><br>
+    <label>b: <input id="b" type="number" value="2"></label><br>
+    <label>Op:
+      <select id="op">
+        <option value="add">+</option>
+        <option value="sub">-</option>
+        <option value="mul">*</option>
+        <option value="div">/</option>
+      </select>
+    </label>
+    <button id="go">Calculer</button>
+    <pre id="out"></pre>
+
+    <script>
+      document.getElementById('go').addEventListener('click', async () => {
+        const a = parseFloat(document.getElementById('a').value)
+        const b = parseFloat(document.getElementById('b').value)
+        const op = document.getElementById('op').value
+        const res = await fetch('/calculer', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({a, b, op})
+        })
+        const data = await res.json()
+        document.getElementById('out').textContent = JSON.stringify(data, null, 2)
+      })
+    </script>
+  </body>
+</html>
