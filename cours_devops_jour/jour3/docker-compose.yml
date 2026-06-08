@@ -1,7 +1,7 @@
 services:
   app:
     build:
-      context: ./cours_devops_jour/jour3
+      context: .
       dockerfile: Dockerfile
     image: calculatrice-devops-app:latest
     expose:

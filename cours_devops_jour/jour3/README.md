@@ -1,6 +1,6 @@
 # Calculatrice DevOps
 
-[![CI](https://github.com/Cr3zy-Hyena/calculatrice-devops/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Cr3zy-Hyena/calculatrice-devops/actions/workflows/ci-cd.yml)
+[![CI](https://github.com/Cr3zy-Hyena/cours_devops/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Cr3zy-Hyena/cours_devops/actions/workflows/ci-cd.yml)
 
 ## Description
 
