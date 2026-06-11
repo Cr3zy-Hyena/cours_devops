@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang='fr'>
-<head>
-    <meta charset='UTF-8'>
-    <title>{% block title %}DevPortfolio{% endblock %}</title>
-    <link rel='stylesheet'
-            href='{{ url_for("static,filename="style.css") }}'>
+<head> 
+    <meta charset='UTF-8'>    # Permet de définir l'encodage des caractères
+    <title>{% block title %}DevPortfolio{% endblock %}</title> # Permet de définir le titre de la page, qui peut être personnalisé dans les templates enfants
+    <link rel='stylesheet'      # Permet de lier une feuille de style CSS à la page
+            href='{{ url_for("static,filename="style.css") }}'> # Utilise la fonction url_for pour générer l'URL de la feuille de style, en spécifiant le nom du fichier dans le dossier static
 </head>
 <body>
     <nav>
-        <a href='{{ url_for("main_index") }}'>Accueil</a>
-        <a href='{{ url_for("main_a_propos")}}'>À propos</a>
+        <a href='{{ url_for("main_index") }}'>Accueil</a>   # Permet de créer un lien vers la page d'accueil en utilisant la fonction url_for pour générer l'URL
+        <a href='{{ url_for("main_a_propos")}}'>À propos</a>   # Permet de créer un lien vers la page "À propos" en utilisant la fonction url_for pour générer l'URL
     </nav>
-    <main>{% block content %}{% endblock %}</main>
-    <footer><p>DevPortfolio</p></footer>
-</body>
+    <main>{% block content %}{% endblock %}</main> # Permet de définir une section principale pour le contenu de la page, qui peut être personnalisé dans les templates enfants
+    <footer><p>DevPortfolio</p></footer>    # Permet de créer un pied de page avec le texte "DevPortfolio"
+</body> 
 </html>
