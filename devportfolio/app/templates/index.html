@@ -1,15 +1,16 @@
-{% extends 'base.html' %}   #
-{% block titre %}Mes Projets{% endblock %}      #Permet de définir le titre de la page en personnalisant le bloc "title" défini dans le template de base, en affichant "Mes Projets" comme titre de la page
-{% block contenu %} #Permet de définir le contenu de la page, qui sera affiché dans la section principale définie dans le template de base
+{% extends 'base.html' %}
+
+{% block title %}Mes Projets{% endblock %}
+
+{% block content %}
 <h1>Mes Projets</h1>
 {% for projet in projets %}
-<div class='carte'> #Permet de créer une carte pour chaque projet en utilisant une boucle for pour itérer sur la liste des projets, et en affichant le titre et la description de chaque projet, ainsi qu'un lien vers la page de détail du projet
+<div class="carte">
     <h2>{{ projet.titre }}</h2>
     <p>{{ projet.description }}</p>
-    < a href='{{ url_for("main.detail_projet",id=projet.id) }}'>Voir</a> #Permet de créer un lien vers la page de détail du projet en utilisant la fonction url_for pour générer l'URL, en spécifiant le nom de la route et l'identifiant du projet
+    <a href="{{ url_for('main.detail_projet', id=projet.id) }}">Voir</a>
 </div>
 {% else %}
-   <p>Aucun projet pour l'instant.</p>
+<p>Aucun projet pour l'instant.</p>
 {% endfor %}
-{% endblock %}
-   
+{% endblock %}   
