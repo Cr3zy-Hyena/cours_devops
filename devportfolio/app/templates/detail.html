@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Détails du projet{% endblock %}
+
+{% block content %}
+<h1>{{ projet.titre }}</h1>
+<p>{{ projet.description }}</p>
+{% if projet.technologies %}
+<p><strong>Technologies :</strong> {{ projet.technologies }}</p>
+{% endif %}
+{% if projet.url_github %}
+<p><a href="{{ projet.url_github }}" target="_blank" rel="noopener">Voir le code sur GitHub</a></p>
+{% endif %}
+{% if projet.url_demo %}
+<p><a href="{{ projet.url_demo }}" target="_blank" rel="noopener">Voir la démo</a></p>
+{% endif %}
+<p><strong>Statut :</strong> {{ projet.statut }}</p>
+<p><a href="{{ url_for('main.index') }}">Retour à la liste</a></p>
+{% endblock %}
