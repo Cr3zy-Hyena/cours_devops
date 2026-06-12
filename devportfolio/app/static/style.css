@@ -1,0 +1,33 @@
+/* CSS de base pour l'application DevPortfolio */
+:root { /* définition des variables CSS */
+    --bg: #0d1117;  /* couleur du fond principal */ --surface: #161b22; /* couleur des surfaces */
+    --border: #30363d; /* couleur des bordures */ --text: #e6edf3; /* couleur du texte */
+    --muted: #8b949e; /* couleur des textes secondaires */ --accent: #1f6feb; /* couleur accent */
+    --green: #238636; /* couleur verte */ --orange: #d29922; /* couleur orange */
+} 
+* { margin:0; padding:0; box-sizing:border-box; } /* reset global des marges et paddings */
+body { font-family:-apple-system,sans-serif; /* police du corps */
+    background:var(--bg); color:var(--text); } /* style du fond et du texte */
+nav { background:var(--surface); /* fond de la navigation */
+    border-bottom:1px solid var(--border); /* bordure inférieure */
+    padding:1rem 2rem; display:flex; gap:2rem; } /* mise en page du nav */
+nav a { color:var(--text); text-decoration:none; } /* liens de nav */
+nav a:hover { color:var(--accent); } /* couleur au survol */
+main { max-width:1100px; margin:2rem auto; padding:0 1.5rem; } /* conteneur principal centré */
+.grille { display:grid; /* grille responsive */
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); /* colonnes flexibles */
+  gap:1.5rem; } /* espacement entre cartes */
+.carte { background:var(--surface); /* fond des cartes */
+  border:1px solid var(--border); border-radius:8px; /* bordure et coins arrondis */
+  padding:1.5rem; transition:border-color .2s; } /* padding et transition */
+.carte:hover { border-color:var(--accent); } /* effet hover sur carte */
+.carte h2 { font-size:1.1rem; margin-bottom:.5rem; } /* titre de carte */
+.carte p { color:var(--muted); font-size:.9rem; } /* paragraphe de carte */
+.carte a { color:var(--accent); text-decoration:none; } /* lien de carte */
+.badge { display:inline-block; padding:.2rem .6rem; /* badge de statut */
+  border-radius:4px; font-size:.75rem; font-weight:bold; } /* style du badge */
+.badge-termine { background:var(--green); color:#fff; } /* badge terminé */
+.badge-en-cours { background:var(--orange); color:#fff; } /* badge en cours */
+footer { text-align:center; color:var(--muted); /* pied de page */ 
+    padding:2rem; border-top:1px solid var(--border); margin-top:3rem; } /* style du footer */
+
