@@ -1,16 +1,30 @@
 {% extends 'base.html' %}
 
+{# Block pour titre de la page #}
 {% block title %}Mes Projets{% endblock %}
 
-{% block content %}
-<h1>Mes Projets</h1>
-{% for projet in projets %}
-<div class="carte">
-    <h2>{{ projet.titre }}</h2>
-    <p>{{ projet.description }}</p>
-    <a href="{{ url_for('main.detail_projet', id=projet.id) }}">Voir</a>
-</div>
-{% else %}
-<p>Aucun projet pour l'instant.</p>
-{% endfor %}
-{% endblock %}   
+{# Block contenu principal #}
+
+  {# Titre de la section projets #}
+  <h1>Mes Projets</h1>
+  {# Conteneur grille pour afficher les projets #}
+  <div class='grille'>
+    {# Boucle pour afficher chaque projet #}
+    {% for p in projets %}
+      {# Conteneur carte pour un projet #}
+      <div class='carte'>
+        {# Titre du projet #}
+        <h2>{{ p.titre }}</h2>
+        {# Badge d'état du projet avec formatage du statut #}
+        <span class='badge badge-{{ p.statut.replace("_","-") }}'>
+          {# Affichage du statut formaté #}
+          {{ p.statut.replace('_',' ').title() }}
+        </span>
+        {# Description du projet #}
+        <p>{{ p.description }}</p>
+        {# Lien vers les détails du projet #}
+        <a href='{{ url_for("main.detail_projet", id=p.id) }}'>Voir details</a>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

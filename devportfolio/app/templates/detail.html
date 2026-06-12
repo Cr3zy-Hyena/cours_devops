@@ -1,19 +1,15 @@
 {% extends 'base.html' %}
-
-{% block title %}Détails du projet{% endblock %}
-
-{% block content %}
+{% block titre %}{{ projet.titre }}{% endblock %}
+{% block contenu %}
+<a href='{{ url_for("main.index") }}'>&larr; Retour</a>
 <h1>{{ projet.titre }}</h1>
+<span class='badge badge-{{ projet.statut.replace("_","-") }}'>
+{{ projet.statut.replace('_',' ').title() }}
+</span>
 <p>{{ projet.description }}</p>
-{% if projet.technologies %}
-<p><strong>Technologies :</strong> {{ projet.technologies }}</p>
-{% endif %}
+<p>Technologies : {{ projet.technologies }}</p>
 {% if projet.url_github %}
-<p><a href="{{ projet.url_github }}" target="_blank" rel="noopener">Voir le code sur GitHub</a></p>
+<a href='{{ projet.url_github }}' target='_blank'>GitHub</a>
 {% endif %}
-{% if projet.url_demo %}
-<p><a href="{{ projet.url_demo }}" target="_blank" rel="noopener">Voir la démo</a></p>
-{% endif %}
-<p><strong>Statut :</strong> {{ projet.statut }}</p>
-<p><a href="{{ url_for('main.index') }}">Retour à la liste</a></p>
+<p>Date : {{ projet.created_at.strftime('%d/%m/%Y') }}</p>
 {% endblock %}
