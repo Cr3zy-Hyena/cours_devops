@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
-{% block titre %}{{ projet.titre }}{% endblock %}
-{% block contenu %}
+{% block title %}{{ projet.titre }}{% endblock %}
+{% block content %}
 <a href='{{ url_for("main.index") }}'>&larr; Retour</a>
 <h1>{{ projet.titre }}</h1>
 <span class='badge badge-{{ projet.statut.replace("_","-") }}'>
