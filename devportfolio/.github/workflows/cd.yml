@@ -1,0 +1,44 @@
+# Nom du workflow affiché dans GitHub Actions
+name: CD - Build et Push Docker
+
+# Déclenchement à chaque push sur la branche main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Récupère le code source du dépôt
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # Connexion à Docker Hub
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Génère automatiquement les tags et labels Docker
+      - name: Métadonnées de l'image
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/mon-application
+
+      # Build et push de l'image Docker
+      - name: Build et Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+          # Cache GitHub Actions pour accélérer les builds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

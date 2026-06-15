@@ -1,0 +1,58 @@
+# Nom du workflow affiché dans GitHub Actions
+name: CI - Tests et qualité
+
+# Déclenchement du workflow
+on:
+  # Exécution à chaque push sur les branches main et develop
+  push:
+    branches: [main, develop]
+
+  # Exécution lors de l'ouverture ou mise à jour d'une Pull Request vers main
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  # Job dédié à l'exécution des tests
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Récupération du code source du dépôt
+      - uses: actions/checkout@v4
+
+      # Installation de Python 3.11
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip' # Mise en cache des dépendances Python
+
+      # Installation des bibliothèques nécessaires au projet
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      # Exécution des tests avec génération du rapport de couverture
+      - name: Lancer les tests
+        run: pytest tests/ -v --cov=app --cov-report=xml
+        env:
+          # Base de données en mémoire pour les tests
+          DATABASE_URL: sqlite:///:memory:
+
+  # Job dédié à l'analyse statique du code
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Récupération du code source
+      - uses: actions/checkout@v4
+
+      # Installation de Python 3.11
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # Installation de l'outil de linting Flake8
+      - run: pip install flake8
+
+      # Vérification du respect des règles de qualité de code
+      - run: flake8 app/ --max-line-length=100
