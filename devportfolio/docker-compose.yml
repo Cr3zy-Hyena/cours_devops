@@ -1,0 +1,70 @@
+version: '3.9' # Version de Docker Compose utilisée
+
+services:
+  web:
+    build: . # Construit l'image Docker à partir du Dockerfile situé à la racine du projet
+    container_name: devportfolio-web # Nom attribué au conteneur
+    restart: unless-stopped # Redémarre automatiquement le conteneur sauf s'il a été arrêté manuellement
+
+    environment:
+      - DATABASE_URL=postgresql://devuser:devpass@db:5432/devportfolio # URL de connexion à la base PostgreSQL
+      - REDIS_URL=redis://redis:6379/0 # URL de connexion au serveur Redis
+      - SECRET_KEY=${SECRET_KEY:-dev-key} # Clé secrète Flask (utilise "dev-key" par défaut)
+      - FLASK_ENV=production # Exécute Flask en mode production
+
+    depends_on:
+      db:
+        condition: service_healthy # Attend que la base de données soit prête avant de démarrer
+
+    expose:
+      - '5000' # Rend le port 5000 accessible aux autres conteneurs du réseau Docker
+
+    networks:
+      - backend # Connecte le service au réseau backend
+
+  nginx:
+    image: nginx:1.25-alpine # Utilise l'image officielle Nginx légère basée sur Alpine
+    container_name: devportfolio-nginx # Nom attribué au conteneur Nginx
+    restart: unless-stopped # Redémarre automatiquement le conteneur sauf arrêt manuel
+
+    ports:
+      - '80:80' # Mappe le port 80 de l'hôte vers le port 80 du conteneur
+
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro # Monte la configuration Nginx en lecture seule
+
+    depends_on:
+      - web # Démarre après le service web
+
+    networks:
+      - backend # Connecte Nginx au même réseau que l'application
+
+  db:
+    image: postgres:15-alpine
+    container_name: devportfolio-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: devportfolio
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U devuser -d devportfolio']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [backend]
+
+  redis:
+    image: redis:7-alpine
+    container_name: devportfolio-redis
+    networks: [backend]
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  pgdata:
+    name: devportfolio_pgdata
