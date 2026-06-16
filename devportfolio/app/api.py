@@ -1,9 +1,12 @@
+import logging
+
 from flask import Blueprint, jsonify, request
 from app.models import Project
 from app import db
 
 # Blueprint pour l'API REST des projets (préfixe '/api')
 api = Blueprint('api', __name__, url_prefix='/api')
+logger = logging.getLogger(__name__)
 
 
 @api.route('/projets', methods=['GET'])
@@ -51,6 +54,7 @@ def creer():
                 statut=data.get('statut', 'en_cours'))
     db.session.add(p)
     db.session.commit()
+    logger.info('Projet cree', extra={'id': p.id, 'titre': p.titre})
     return jsonify(p.to_dict()), 201
 
 
@@ -64,3 +68,5 @@ def supprimer(id):
     db.session.delete(p)
     db.session.commit()
     return jsonify({'message': f'Projet {id} supprime'}), 200
+
+

@@ -19,6 +19,9 @@ def create_app(config=None):
     if config:
         app.config.update(config)
 
+    from app.logger import setup_logging
+
+    setup_logging(app)
     db.init_app(app)
 
     from app.api import api
