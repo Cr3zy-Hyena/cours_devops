@@ -37,9 +37,11 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Lancer les tests
-        run: pytest tests/ -v --cov=app --cov-report=xml
+        working-directory: ./devportfolio
         env:
           DATABASE_URL: 'sqlite:///:memory:'
+          PYTHONPATH: .
+        run: pytest tests/ -v --cov=app --cov-report=xml
 
   build-and-push:
     name: Build et Push Docker
