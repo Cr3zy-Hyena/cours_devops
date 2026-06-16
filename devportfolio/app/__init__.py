@@ -5,11 +5,11 @@ from flask_sqlalchemy import SQLAlchemy
 
 try:
     from prometheus_flask_exporter import PrometheusMetrics
+    from prometheus_client import CollectorRegistry
 except ImportError:
     PrometheusMetrics = None
 
 
-# Instance SQLAlchemy exportee pour etre utilisee dans les autres modules.
 db = SQLAlchemy()
 
 
@@ -32,7 +32,7 @@ def create_app(config=None):
     db.init_app(app)
 
     if PrometheusMetrics:
-        metrics = PrometheusMetrics(app)
+        metrics = PrometheusMetrics(app, registry=CollectorRegistry())
         metrics.info('app_info', 'Info', version='1.0', service='devportfolio')
 
     from app.api import api
