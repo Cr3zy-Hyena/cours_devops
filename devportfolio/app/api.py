@@ -3,16 +3,11 @@ import logging
 from flask import Blueprint, jsonify, request
 from app.models import Project
 from app import db
-# Importation de l'exportateur Prometheus
-from prometheus_flask_exporter import PrometheusMetrics
 
 # Blueprint pour l'API REST des projets (préfixe '/api')
 api = Blueprint('api', __name__, url_prefix='/api')
 logger = logging.getLogger(__name__)
 
-# Initialisation des métriques Prometheus pour ce Blueprint
-# Cela va suivre automatiquement le statut des requêtes, la durée, etc.
-metrics = PrometheusMetrics.for_blueprint(api)
 
 @api.route('/projets', methods=['GET'])
 def lister():
