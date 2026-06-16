@@ -3,12 +3,19 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
+try:
+    from prometheus_flask_exporter import PrometheusMetrics
+except ImportError:
+    PrometheusMetrics = None
 
+
+# Instance SQLAlchemy exportee pour etre utilisee dans les autres modules.
 db = SQLAlchemy()
 
 
 def create_app(config=None):
     app = Flask(__name__)
+
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
         'DATABASE_URL',
@@ -23,6 +30,10 @@ def create_app(config=None):
 
     setup_logging(app)
     db.init_app(app)
+
+    if PrometheusMetrics:
+        metrics = PrometheusMetrics(app)
+        metrics.info('app_info', 'Info', version='1.0', service='devportfolio')
 
     from app.api import api
     from app.routes import main

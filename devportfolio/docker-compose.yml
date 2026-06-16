@@ -21,6 +21,22 @@ services:
 
     networks:
       - backend # Connecte le service au réseau backend
+  prometheus:
+    image: prom/prometheus:v2.47.0 # Image officielle de Prometheus
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro # Configuration de collecte
+      - promdata:/prometheus # Stockage des métriques
+    ports: ['9090:9090'] # Port par défaut de l'UI Prometheus
+    networks: [backend] # Accès aux exporteurs de métriques sur le réseau
+
+  grafana:
+    image: grafana/grafana:10.2.0 # Plateforme de visualisation
+    ports: ['3000:3000'] # Interface web de Grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin # Mot de passe admin par défaut (à changer en prod)
+    volumes: [grafdata:/var/lib/grafana] # Persistance des dashboards et plugins
+    networks: [backend]
+  
 
   nginx:
     image: nginx:1.25-alpine # Utilise l'image officielle Nginx légère basée sur Alpine
@@ -40,31 +56,35 @@ services:
       - backend # Connecte Nginx au même réseau que l'application
 
   db:
-    image: postgres:15-alpine
-    container_name: devportfolio-db
-    restart: unless-stopped
+    image: postgres:15-alpine # Version légère de PostgreSQL
+    container_name: devportfolio-db # Nom du conteneur de base de données
+    restart: unless-stopped # Relance en cas de crash
     environment:
-      POSTGRES_USER: devuser
-      POSTGRES_PASSWORD: devpass
-      POSTGRES_DB: devportfolio
+      POSTGRES_USER: devuser # Utilisateur de la base
+      POSTGRES_PASSWORD: devpass # Mot de passe de la base
+      POSTGRES_DB: devportfolio # Nom de la base de données
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data # Volume pour la persistance des données SQL
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U devuser -d devportfolio']
+      test: ['CMD-SHELL', 'pg_isready -U devuser -d devportfolio'] # Vérifie si la DB est prête
       interval: 10s
       timeout: 5s
       retries: 5
     networks: [backend]
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine # Image légère de Redis pour le cache
     container_name: devportfolio-redis
-    networks: [backend]
+    networks: [backend] # Communication avec l'application web
 
 networks:
-  backend:
+  backend: # Réseau bridge isolé pour la communication inter-conteneurs
     driver: bridge
 
 volumes:
   pgdata:
     name: devportfolio_pgdata
+  promdata:
+    name: devportfolio_promdata
+  grafdata:
+    name: devportfolio_grafdata
