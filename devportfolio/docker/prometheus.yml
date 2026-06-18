@@ -7,14 +7,3 @@ scrape_configs:
     static_configs:
       - targets: ['web:5000']
 
-apiVersion: 1
-
-datasources:
-  - name: Prometheus
-    type: prometheus
-    uid: devportfolio-prometheus
-    url: http://prometheus:9090
-    isDefault: true
-    access: proxy
-    jsonData:
-      httpMethod: POST

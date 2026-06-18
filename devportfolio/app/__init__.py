@@ -32,7 +32,7 @@ def create_app(config=None):
     db.init_app(app)
 
     if PrometheusMetrics:
-        metrics = PrometheusMetrics(app, registry=CollectorRegistry())
+        metrics = PrometheusMetrics(app)
         metrics.info('app_info', 'Info', version='1.0', service='devportfolio')
 
     from app.api import api
