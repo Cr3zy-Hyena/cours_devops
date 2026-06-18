@@ -1,13 +1,20 @@
 global:
   scrape_interval: 15s
-scrape_configs:
-  - job_name: devportfolio
-    static_configs:
-      - targets: ['web:5000']
-    metrics_path: /metrics
 
 scrape_configs:
-  - job_name: 'flask_api_projets'
-    metrics_path: '/metrics'  # L'url exposée par prometheus-flask-exporter
+  - job_name: 'devportfolio'
+    metrics_path: '/metrics'
     static_configs:
-      - targets: ['host.docker.internal:5000'] # Remplacez par host.docker.internal:5000 si Prometheus est dans Docker
+      - targets: ['web:5000']
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: devportfolio-prometheus
+    url: http://prometheus:9090
+    isDefault: true
+    access: proxy
+    jsonData:
+      httpMethod: POST

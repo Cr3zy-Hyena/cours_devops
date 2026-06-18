@@ -1,84 +1,84 @@
-version: '3.9' # Version de Docker Compose utilisée
+version: '3.9'
 
 services:
   web:
-    build: . # Construit l'image Docker à partir du Dockerfile situé à la racine du projet
-    container_name: devportfolio-web # Nom attribué au conteneur
-    restart: unless-stopped # Redémarre automatiquement le conteneur sauf s'il a été arrêté manuellement
+    build: .
+    container_name: devportfolio-web
+    restart: unless-stopped
 
     environment:
-      - DATABASE_URL=postgresql://devuser:devpass@db:5432/devportfolio # URL de connexion à la base PostgreSQL
-      - REDIS_URL=redis://redis:6379/0 # URL de connexion au serveur Redis
-      - SECRET_KEY=${SECRET_KEY:-dev-key} # Clé secrète Flask (utilise "dev-key" par défaut)
-      - FLASK_ENV=production # Exécute Flask en mode production
+      - DATABASE_URL=postgresql://devuser:devpass@db:5432/devportfolio
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-dev-key}
+      - FLASK_ENV=production
 
     depends_on:
       db:
-        condition: service_healthy # Attend que la base de données soit prête avant de démarrer
+        condition: service_healthy
 
     expose:
-      - '5000' # Rend le port 5000 accessible aux autres conteneurs du réseau Docker
+      - '5000'
+    ports:
+      - '5000:5000'   # exposé à l'hôte pour curl http://localhost:5000/metrics
 
     networks:
-      - backend # Connecte le service au réseau backend
+      - backend
+
   prometheus:
-    image: prom/prometheus:v2.47.0 # Image officielle de Prometheus
+    image: prom/prometheus:v2.47.0
     volumes:
-      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro # Configuration de collecte
-      - promdata:/prometheus # Stockage des métriques
-    ports: ['9090:9090'] # Port par défaut de l'UI Prometheus
-    networks: [backend] # Accès aux exporteurs de métriques sur le réseau
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    ports: ['9090:9090']
+    networks: [backend]
 
   grafana:
-    image: grafana/grafana:10.2.0 # Plateforme de visualisation
-    ports: ['3000:3000'] # Interface web de Grafana
+    image: grafana/grafana:10.2.0
+    ports: ['3000:3000']
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin # Mot de passe admin par défaut (à changer en prod)
-    volumes: [grafdata:/var/lib/grafana] # Persistance des dashboards et plugins
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafdata:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro  # datasource + dashboard automatiques
     networks: [backend]
-  
 
   nginx:
-    image: nginx:1.25-alpine # Utilise l'image officielle Nginx légère basée sur Alpine
-    container_name: devportfolio-nginx # Nom attribué au conteneur Nginx
-    restart: unless-stopped # Redémarre automatiquement le conteneur sauf arrêt manuel
-
+    image: nginx:1.25-alpine
+    container_name: devportfolio-nginx
+    restart: unless-stopped
     ports:
-      - '80:80' # Mappe le port 80 de l'hôte vers le port 80 du conteneur
-
+      - '80:80'
     volumes:
-      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro # Monte la configuration Nginx en lecture seule
-
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - web # Démarre après le service web
-
+      - web
     networks:
-      - backend # Connecte Nginx au même réseau que l'application
+      - backend
 
   db:
-    image: postgres:15-alpine # Version légère de PostgreSQL
-    container_name: devportfolio-db # Nom du conteneur de base de données
-    restart: unless-stopped # Relance en cas de crash
+    image: postgres:15-alpine
+    container_name: devportfolio-db
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: devuser # Utilisateur de la base
-      POSTGRES_PASSWORD: devpass # Mot de passe de la base
-      POSTGRES_DB: devportfolio # Nom de la base de données
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: devportfolio
     volumes:
-      - pgdata:/var/lib/postgresql/data # Volume pour la persistance des données SQL
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U devuser -d devportfolio'] # Vérifie si la DB est prête
+      test: ['CMD-SHELL', 'pg_isready -U devuser -d devportfolio']
       interval: 10s
       timeout: 5s
       retries: 5
     networks: [backend]
 
   redis:
-    image: redis:7-alpine # Image légère de Redis pour le cache
+    image: redis:7-alpine
     container_name: devportfolio-redis
-    networks: [backend] # Communication avec l'application web
+    networks: [backend]
 
 networks:
-  backend: # Réseau bridge isolé pour la communication inter-conteneurs
+  backend:
     driver: bridge
 
 volumes:

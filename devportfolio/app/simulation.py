@@ -1,65 +1,124 @@
-import time
+"""
+Script de simulation de trafic pour DevPortfolio.
+
+Genere des requetes variees (GET/POST/DELETE) sur toutes les routes de
+l'app, y compris des cas d'erreur (404, 400), afin que les metriques
+Prometheus exposees par prometheus_flask_exporter (compteurs de requetes,
+durees, codes HTTP...) aient des donnees a afficher.
+
+Usage:
+    python simulate_traffic.py
+
+Variables d'environnement optionnelles:
+    APP_URL   -> URL de base de l'app (defaut: http://localhost:5000)
+    DURATION  -> duree de la simulation en secondes (defaut: 120)
+    PAUSE     -> pause entre deux requetes en secondes (defaut: 0.3)
+"""
+
+import os
 import random
+import time
+
 import requests
 
-BASE_URL = "http://localhost:5000/api/projets"
+BASE_URL = os.getenv('APP_URL', 'http://localhost:5000')
+DURATION = float(os.getenv('DURATION', '120'))
+PAUSE = float(os.getenv('PAUSE', '0.3'))
 
-def simuler_trafic():
-    print("🚀 Début de la simulation de trafic vers l'API Flask...")
-    
-    # Liste de technologies pour la simulation de création
-    techs = ["Flask", "React", "Docker", "Prometheus", "Grafana", "PostgreSQL"]
-    
-    while True:
-        action = random.choice(["LISTER", "OBTENIR_OK", "OBTENIR_404", "CREER", "CREER_PROVENANT_D_ERREUR", "SUPPRIMER"])
-        
-        try:
-            if action == "LISTER":
-                # Simule un GET global ou avec filtre alternatif
-                statut_filtre = random.choice([None, "en_cours", "termine"])
-                params = {'statut': statut_filtre} if statut_filtre else {}
-                res = requests.get(BASE_URL, params=params)
-                print(f"[GET] Liste des projets (Filtre: {statut_filtre}) -> Code {res.status_code}")
-                
-            elif action == "OBTENIR_OK":
-                # Tente de récupérer le projet ID 1 (en supposant qu'il existe)
-                res = requests.get(f"{BASE_URL}/1")
-                print(f"[GET] Projet ID 1 -> Code {res.status_code}")
-                
-            elif action == "OBTENIR_404":
-                # ID inexistant pour déclencher le logger.warning de la route obtenir
-                id_invalide = random.randint(9999, 99999)
-                res = requests.get(f"{BASE_URL}/{id_invalide}")
-                print(f"[GET] Projet ID {id_invalide} (Inexistant) -> Code {res.status_code}")
-                
-            elif action == "CREER":
-                # Création valide
-                payload = {
-                    "titre": f"Projet Automatique {random.randint(100, 999)}",
-                    "description": "Généré par le script de simulation",
-                    "technologies": random.choice(techs),
-                    "statut": random.choice(["en_cours", "termine"])
-                }
-                res = requests.post(BASE_URL, json=payload)
-                print(f"[POST] Création projet -> Code {res.status_code}")
-                
-            elif action == "CREER_PROVENANT_D_ERREUR":
-                # Envoi d'un payload incomplet (sans description) pour provoquer une 400
-                payload = {"titre": "Projet Incomplet Invalide"}
-                res = requests.post(BASE_URL, json=payload)
-                print(f"[POST] Tentative invalide (Attendu: 400) -> Code {res.status_code}")
-                
-            elif action == "SUPPRIMER":
-                # Tente de supprimer un ID aléatoire (provoque des 404 ou 200 selon la BDD)
-                id_cible = random.randint(1, 5)
-                res = requests.delete(f"{BASE_URL}/{id_cible}")
-                print(f"[DELETE] Suppression ID {id_cible} -> Code {res.status_code}")
-                
-        except requests.exceptions.ConnectionError:
-            print("❌ Impossible de joindre l'API Flask. Vérifiez qu'elle tourne sur http://localhost:5000")
-            
-        # Attend entre 0.5 et 3 secondes avant la prochaine requête
-        time.sleep(random.uniform(0.5, 3.0))
+SAMPLE_PROJECTS = [
+    {
+        'titre': 'Portfolio DevOps',
+        'description': 'Pipeline CI/CD avec Docker et GitHub Actions',
+        'technologies': 'Python, Flask, Docker',
+        'statut': 'en_cours',
+    },
+    {
+        'titre': 'API Meteo',
+        'description': 'API REST renvoyant des previsions meteo',
+        'technologies': 'FastAPI, PostgreSQL',
+        'statut': 'termine',
+    },
+    {
+        'titre': 'Bot Discord',
+        'description': 'Bot de moderation automatique pour un serveur Discord',
+        'technologies': 'Python, discord.py',
+        'statut': 'en_cours',
+    },
+    {
+        'titre': 'Site vitrine',
+        'description': 'Site vitrine pour un artisan local',
+        'technologies': 'HTML, CSS, JavaScript',
+        'statut': 'termine',
+    },
+]
 
-if __name__ == "__main__":
-    simuler_trafic()
+
+def hit(method, path, **kwargs):
+    """Effectue une requete HTTP et affiche le resultat."""
+    url = f"{BASE_URL}{path}"
+    try:
+        r = requests.request(method, url, timeout=5, **kwargs)
+        print(f"{method:6} {path:28} -> {r.status_code}")
+        return r
+    except requests.RequestException as e:
+        print(f"{method:6} {path:28} -> ERREUR ({e})")
+        return None
+
+
+def simulate_traffic(duration_seconds, pause):
+    created_ids = []
+    end_time = time.time() + duration_seconds
+
+    actions = [
+        'accueil', 'a_propos', 'sante',
+        'liste_projets', 'liste_filtree',
+        'creer', 'creer_invalide',
+        'obtenir', 'obtenir_inexistant',
+        'detail_html',
+        'supprimer',
+    ]
+
+    while time.time() < end_time:
+        action = random.choice(actions)
+
+        if action == 'accueil':
+            hit('GET', '/')
+        elif action == 'a_propos':
+            hit('GET', '/a-propos')
+        elif action == 'sante':
+            hit('GET', '/sante')
+        elif action == 'liste_projets':
+            hit('GET', '/api/projets')
+        elif action == 'liste_filtree':
+            statut = random.choice(['en_cours', 'termine'])
+            hit('GET', '/api/projets', params={'statut': statut})
+        elif action == 'creer':
+            payload = random.choice(SAMPLE_PROJECTS)
+            r = hit('POST', '/api/projets', json=payload)
+            if r is not None and r.status_code == 201:
+                created_ids.append(r.json()['id'])
+        elif action == 'creer_invalide':
+            # Manque le champ 'description' -> doit renvoyer 400
+            hit('POST', '/api/projets', json={'titre': 'Projet incomplet'})
+        elif action == 'obtenir':
+            id_ = random.choice(created_ids) if created_ids else 1
+            hit('GET', f'/api/projets/{id_}')
+        elif action == 'obtenir_inexistant':
+            hit('GET', '/api/projets/999999')
+        elif action == 'detail_html':
+            id_ = random.choice(created_ids) if created_ids else 1
+            hit('GET', f'/projet/{id_}')
+        elif action == 'supprimer':
+            if created_ids:
+                id_ = created_ids.pop()
+                hit('DELETE', f'/api/projets/{id_}')
+            else:
+                hit('DELETE', '/api/projets/999999')
+
+        time.sleep(pause * random.uniform(0.5, 1.5))
+
+
+if __name__ == '__main__':
+    print(f"Simulation de trafic vers {BASE_URL} pendant {DURATION:.0f}s...\n")
+    simulate_traffic(DURATION, PAUSE)
+    print("\nSimulation terminee.")
