@@ -12,4 +12,20 @@
 <a href='{{ projet.url_github }}' target='_blank'>GitHub</a>
 {% endif %}
 <p>Date : {{ projet.created_at.strftime('%d/%m/%Y') }}</p>
+
+<button onclick="supprimerProjet({{ projet.id }})" class="btn-supprimer">Supprimer</button>
+
+<script>
+async function supprimerProjet(id) {
+  if (!confirm('Supprimer ce projet definitivement ?')) return;
+
+  const reponse = await fetch(`/api/projets/${id}`, { method: 'DELETE' });
+
+  if (reponse.ok) {
+    window.location.href = '/';
+  } else {
+    alert('Erreur lors de la suppression du projet.');
+  }
+}
+</script>
 {% endblock %}
