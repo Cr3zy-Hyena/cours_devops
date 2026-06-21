@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if projet %}Modifier{% else %}Nouveau projet{% endif %}{% endblock %}
+
+{% block content %}
+  <h1>{% if projet %}Modifier le projet{% else %}Nouveau projet{% endif %}</h1>
+
+  <form id="form-projet" class="form-projet">
+    <label for="titre">Titre *</label>
+    <input type="text" id="titre" name="titre" required
+           value="{{ projet.titre if projet else '' }}">
+
+    <label for="description">Description *</label>
+    <textarea id="description" name="description" rows="4" required>{{ projet.description if projet else '' }}</textarea>
+
+    <label for="technologies">Technologies</label>
+    <input type="text" id="technologies" name="technologies"
+           placeholder="Python, Flask, Docker"
+           value="{{ projet.technologies if projet else '' }}">
+
+    <label for="url_github">URL GitHub</label>
+    <input type="url" id="url_github" name="url_github"
+           placeholder="https://github.com/..."
+           value="{{ projet.url_github if projet else '' }}">
+
+    <label for="url_demo">URL démo</label>
+    <input type="url" id="url_demo" name="url_demo"
+           placeholder="https://..."
+           value="{{ projet.url_demo if projet else '' }}">
+
+    <label for="statut">Statut</label>
+    <select id="statut" name="statut">
+      <option value="en_cours" {% if projet and projet.statut == 'en_cours' %}selected{% endif %}>En cours</option>
+      <option value="termine" {% if projet and projet.statut == 'termine' %}selected{% endif %}>Terminé</option>
+    </select>
+
+    <p id="form-erreur" class="form-erreur" hidden></p>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-valider">
+        {% if projet %}Enregistrer{% else %}Créer{% endif %}
+      </button>
+      <a href="{{ url_for('main.index') }}" class="btn-annuler">Annuler</a>
+    </div>
+  </form>
+
+  <script>
+    const projetId = {{ projet.id if projet else 'null' }};
+    const form = document.getElementById('form-projet');
+    const erreurEl = document.getElementById('form-erreur');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      erreurEl.hidden = true;
+
+      const data = {
+        titre: form.titre.value.trim(),
+        description: form.description.value.trim(),
+        technologies: form.technologies.value.trim(),
+        url_github: form.url_github.value.trim(),
+        url_demo: form.url_demo.value.trim(),
+        statut: form.statut.value,
+      };
+
+      const url = projetId ? `/api/projets/${projetId}` : '/api/projets';
+      const method = projetId ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.erreur || `Erreur ${res.status}`);
+        }
+
+        const projet = await res.json();
+        window.location.href = `/projet/${projet.id}`;
+      } catch (err) {
+        erreurEl.textContent = err.message;
+        erreurEl.hidden = false;
+      }
+    });
+  </script>
+{% endblock %}

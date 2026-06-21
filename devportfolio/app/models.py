@@ -1,6 +1,6 @@
 from app import db  # import de l'instance de base de données SQLAlchemy depuis app/__init__.py
 from datetime import datetime  # import de datetime pour gérer les dates de création des projets
-
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class Project(db.Model):  # définition du modèle Project qui correspond à une table SQL
     __tablename__ = 'projets'  # nom de la table dans la base de données
@@ -25,6 +25,21 @@ class Project(db.Model):  # définition du modèle Project qui correspond à une
             'created_at': self.created_at.isoformat(),  # date de création formatée en ISO
         }
 
+
     def __repr__(self):  # méthode de représentation texte de l'objet
         return f'<Project {self.titre}>'  # chaîne affichée pour l'objet lors du débogage
-    
+
+from flask_login import UserMixin
+
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)

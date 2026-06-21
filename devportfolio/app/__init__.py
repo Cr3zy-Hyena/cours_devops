@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
 
 try:
     from prometheus_flask_exporter import PrometheusMetrics
@@ -11,7 +12,8 @@ except ImportError:
 
 
 db = SQLAlchemy()
-
+login_manager = LoginManager()
+login_manager.login_view = "main.login"
 
 def create_app(config=None):
     app = Flask(__name__)
@@ -30,7 +32,7 @@ def create_app(config=None):
 
     setup_logging(app)
     db.init_app(app)
-
+    login_manager.init_app(app)
     if PrometheusMetrics:
         metrics = PrometheusMetrics(app)
         metrics.info('app_info', 'Info', version='1.0', service='devportfolio')
@@ -40,5 +42,9 @@ def create_app(config=None):
 
     app.register_blueprint(api)
     app.register_blueprint(main)
+    from app.models import User
 
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
     return app
