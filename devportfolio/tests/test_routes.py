@@ -1,5 +1,5 @@
-def test_accueil(client):
-    r = client.get('/')
+def test_accueil(auth_client):
+    r = auth_client.get('/')
     assert r.status_code == 200
 def test_health_check(client):
     import json

@@ -1,8 +1,6 @@
-from flask import Blueprint, render_template, jsonify
-from app.models import Project
-from app import db
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for
-from flask_login import login_user, logout_user, login_required, UserMixin, current_user
+from flask_login import login_user, logout_user, login_required
+from app import db
 from app.models import Project, User
 
 main = Blueprint('main', __name__)

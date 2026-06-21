@@ -1,6 +1,6 @@
 import pytest
 from app import create_app, db
-from app.models import Project
+from app.models import Project, User
 
 
 # Fixture principale utilisee par les tests.
@@ -31,6 +31,21 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+# Fixture qui fournit un client deja authentifie.
+# Cree un utilisateur de test puis se connecte via POST /login,
+# pour les routes protegees par @login_required (ex: '/').
+@pytest.fixture
+def auth_client(client, app):
+    with app.app_context():
+        user = User(username='testuser')
+        user.set_password('testpass')
+        db.session.add(user)
+        db.session.commit()
+
+    client.post('/login', data={'username': 'testuser', 'password': 'testpass'})
+    return client
 
 
 # Fixture de donnee de test.

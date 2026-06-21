@@ -34,7 +34,10 @@ def create_app(config=None):
     db.init_app(app)
     login_manager.init_app(app)
     if PrometheusMetrics:
-        metrics = PrometheusMetrics(app)
+        registry = CollectorRegistry()  # registre isolé : évite les collisions
+                                         # quand create_app() est appelé plusieurs
+                                         # fois (ex: un nouvel objet app par test pytest)
+        metrics = PrometheusMetrics(app, registry=registry)
         metrics.info('app_info', 'Info', version='1.0', service='devportfolio')
 
     from app.api import api
