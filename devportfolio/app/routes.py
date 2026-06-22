@@ -1,5 +1,4 @@
 import os
-import uuid
 import stripe
 import logging
 
@@ -14,10 +13,6 @@ logger = logging.getLogger(__name__)
 
 # Stripe se configure depuis les variables d'environnement
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY', '')
-
-# Mode test gratuit : déverrouillage sans carte, 0 €
-# Activé si STRIPE_TEST_FREE=true dans .env (dev / démo uniquement)
-TEST_FREE_MODE = os.getenv('STRIPE_TEST_FREE', 'false').lower() == 'true'
 
 
 # ── Pages principales ──────────────────────────────────────────────────────────
@@ -43,8 +38,7 @@ def detail_projet(id):
             statut='reussi'
         ).first() is not None
 
-    return render_template('detail.html', projet=projet, deja_paye=deja_paye,
-                           test_free_mode=TEST_FREE_MODE)
+    return render_template('detail.html', projet=projet, deja_paye=deja_paye)
 
 
 @main.route('/a-propos')
@@ -170,53 +164,6 @@ def payer(id):
         abort(500, f"Erreur Stripe : {e.user_message}")
 
 
-@main.route('/projet/<int:id>/debloquer-test', methods=['POST'])
-@login_required
-def debloquer_test(id):
-    """
-    Déverrouillage gratuit en mode test (0 € — aucune carte requise).
-
-    Disponible uniquement si STRIPE_TEST_FREE=true dans .env.
-    Simule une transaction Stripe réussie côté serveur sans appel API réel :
-    crée un Paiement avec un stripe_session_id factice et statut='reussi'.
-    """
-    if not TEST_FREE_MODE:
-        abort(403, "Mode test gratuit désactivé.")
-
-    projet = Project.query.get_or_404(id)
-
-    if not projet.verrouille:
-        return redirect(url_for('main.detail_projet', id=id))
-
-    # Idempotent : si déjà débloqué, on redirige directement
-    existant = Paiement.query.filter_by(
-        projet_id=id, user_id=current_user.id, statut='reussi'
-    ).first()
-    if existant:
-        return redirect(url_for('main.detail_projet', id=id))
-
-    # ID de session factice mais unique (format similaire à Stripe)
-    fake_session_id = f"test_free_{uuid.uuid4().hex}"
-
-    paiement = Paiement(
-        projet_id=id,
-        user_id=current_user.id,
-        stripe_session_id=fake_session_id,
-        montant_centimes=0,       # 0 € — simulation pure
-        statut='reussi',
-    )
-    db.session.add(paiement)
-    db.session.commit()
-
-    logger.info("Déverrouillage test gratuit", extra={
-        'fake_session_id': fake_session_id,
-        'projet_id': id,
-        'user_id': current_user.id,
-    })
-
-    return redirect(url_for('main.paiement_succes_test', id=id))
-
-
 @main.route('/projet/<int:id>/paiement/succes')
 @login_required
 def paiement_succes(id):
@@ -249,14 +196,6 @@ def paiement_succes(id):
     except stripe.error.StripeError as e:
         logger.error("Erreur vérification Stripe", exc_info=True)
         abort(500, f"Impossible de vérifier le paiement : {e.user_message}")
-
-
-@main.route('/projet/<int:id>/paiement/succes-test')
-@login_required
-def paiement_succes_test(id):
-    """Page de confirmation pour le déverrouillage test gratuit (0 €)."""
-    projet = Project.query.get_or_404(id)
-    return render_template('paiement_succes.html', projet=projet, test_mode=True)
 
 
 @main.route('/projet/<int:id>/paiement/annule')
