@@ -11,19 +11,13 @@ def test_health_check(client):
     data = json.loads(r.data)
     assert data['statut'] == 'ok'
 
-def test_projet_existant(client, projet_test):
-    # Code pour te connecter ou simuler une session utilisateur ici
-    # Exemple si tu as un helper ou si tu utilises le client de test Flask-Login :
-    with client.session_transaction() as sess:
-        sess['_user_id'] = '1' # ID d'un utilisateur de test en BDD
-        sess['_fresh'] = True
-
-    r = client.get(f'/projet/{projet_test}')
+def test_projet_existant(auth_client, projet_test):
+    # Plus besoin de manipuler la session manuellement !
+    r = auth_client.get(f'/projet/{projet_test}')
     assert r.status_code == 200
-def test_projet_inexistant(client):
-    with client.session_transaction() as sess:
-        sess['_user_id'] = '1'
-        sess['_fresh'] = True
 
-    r = client.get('/projet/9999')
+
+def test_projet_inexistant(auth_client):
+    # Idem ici
+    r = auth_client.get('/projet/9999')
     assert r.status_code == 404
