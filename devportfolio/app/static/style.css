@@ -35,3 +35,53 @@ footer { text-align:center; color:var(--muted); /* pied de page */
   border:none; border-radius:6px; cursor:pointer; font-size:.9rem; }
 .btn-supprimer:hover { background:#f85149; } /* couleur au survol */
 
+/* ── Bloc projet verrouillé ──────────────────────────────────────────── */
+.verrou-bloc { background:var(--surface); border:2px solid var(--border);
+  border-radius:12px; padding:2.5rem; max-width:480px; margin:2rem auto;
+  text-align:center; }
+.verrou-icone { font-size:3rem; margin-bottom:1rem; }
+.verrou-bloc h2 { font-size:1.4rem; margin-bottom:.75rem; }
+.verrou-bloc p  { color:var(--muted); margin-bottom:1rem; }
+.verrou-liste { list-style:none; text-align:left; margin:.5rem auto 1.5rem;
+  display:inline-block; }
+.verrou-liste li { padding:.3rem 0; font-size:.95rem; }
+.verrou-prix { margin:1.5rem 0; }
+.prix-montant { font-size:2rem; font-weight:bold; color:var(--accent); }
+.prix-info { display:block; font-size:.8rem; color:var(--muted); margin-top:.25rem; }
+.verrou-note { font-size:.78rem; color:var(--muted); margin-top:1.25rem;
+  background:#1c2128; border-radius:6px; padding:.6rem; }
+
+/* ── Bouton payer ────────────────────────────────────────────────────── */
+.btn-payer { display:inline-block; margin-top:1rem; padding:.75rem 1.75rem;
+  background:var(--accent); color:#fff; border-radius:8px;
+  text-decoration:none; font-weight:bold; font-size:1rem;
+  transition:background .2s; }
+.btn-payer:hover { background:#388bfd; }
+
+/* ── Badge débloqué ──────────────────────────────────────────────────── */
+.badge-debloque { background:#1a3a1a; color:#56d364; border:1px solid #238636;
+  border-radius:8px; padding:.5rem 1rem; margin:1rem 0;
+  display:inline-block; font-size:.9rem; }
+
+/* ── Pages succès / annulation ───────────────────────────────────────── */
+.paiement-succes, .paiement-annule { text-align:center; margin-top:4rem; }
+.paiement-icone { font-size:4rem; margin-bottom:1.5rem; }
+.paiement-succes h1 { color:#56d364; margin-bottom:1rem; }
+.paiement-annule h1 { color:#f85149; margin-bottom:1rem; }
+.paiement-note { color:var(--muted); font-size:.85rem; margin:1rem 0 2rem; }
+.paiement-actions { display:flex; gap:1rem; justify-content:center; margin-top:1.5rem; }
+.btn-retour { display:inline-block; padding:.75rem 1.5rem; background:var(--surface);
+  border:1px solid var(--border); color:var(--text); border-radius:8px;
+  text-decoration:none; }
+
+/* ── Bouton déconnexion navbar ───────────────────────────────────────── */
+.btn-logout { margin-left:auto; padding:.4rem .9rem;
+  background:#da3633; color:#fff !important; border-radius:6px;
+  text-decoration:none; font-size:.85rem; }
+.btn-logout:hover { background:#f85149; color:#fff !important; }
+
+/* ── Bouton supprimer ────────────────────────────────────────────────── */
+.btn-supprimer { margin-top:1.5rem; display:block; padding:.6rem 1.2rem;
+  background:#da3633; color:#fff; border:none; border-radius:6px;
+  cursor:pointer; font-size:.9rem; }
+.btn-supprimer:hover { background:#f85149; }

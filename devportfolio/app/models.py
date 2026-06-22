@@ -1,41 +1,61 @@
-from app import db  # import de l'instance de base de données SQLAlchemy depuis app/__init__.py
-from datetime import datetime  # import de datetime pour gérer les dates de création des projets
+from app import db
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
-class Project(db.Model):  # définition du modèle Project qui correspond à une table SQL
-    __tablename__ = 'projets'  # nom de la table dans la base de données
-    id = db.Column(db.Integer, primary_key=True)  # identifiant unique du projet, clé primaire
-    titre = db.Column(db.String(100), nullable=False)  # titre du projet, champ obligatoire
-    description = db.Column(db.Text, nullable=False)  # description du projet, champ obligatoire
-    technologies = db.Column(db.String(500))  # technologies utilisées, champ texte facultatif
-    url_github = db.Column(db.String(500))  # URL du dépôt GitHub du projet
-    url_demo = db.Column(db.String(500))  # URL de démonstration ou du site en ligne
-    statut = db.Column(db.String(50), default='en_cours')  # statut du projet, valeur par défaut 'en_cours'
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # date de création du projet
 
-    def to_dict(self):  # méthode pour convertir l'objet en dictionnaire
+class Project(db.Model):
+    __tablename__ = 'projets'
+    id          = db.Column(db.Integer, primary_key=True)
+    titre       = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    technologies= db.Column(db.String(500))
+    url_github  = db.Column(db.String(500))
+    url_demo    = db.Column(db.String(500))
+    statut      = db.Column(db.String(50), default='en_cours')
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+    verrouille  = db.Column(db.Boolean, default=False)  # True = contenu caché jusqu'au paiement
+
+    def to_dict(self):
         return {
-            'id': self.id,  # identifiant du projet
-            'titre': self.titre,  # titre du projet
-            'description': self.description,  # description du projet
-            'technologies': self.technologies,  # technologies associées au projet
-            'url_github': self.url_github,  # lien GitHub du projet
-            'url_demo': self.url_demo,  # lien de démonstration du projet
-            'statut': self.statut,  # statut du projet
-            'created_at': self.created_at.isoformat(),  # date de création formatée en ISO
+            'id': self.id,
+            'titre': self.titre,
+            'description': self.description,
+            'technologies': self.technologies,
+            'url_github': self.url_github,
+            'url_demo': self.url_demo,
+            'statut': self.statut,
+            'created_at': self.created_at.isoformat(),
+            'verrouille': self.verrouille,
         }
 
+    def __repr__(self):
+        return f'<Project {self.titre}>'
 
-    def __repr__(self):  # méthode de représentation texte de l'objet
-        return f'<Project {self.titre}>'  # chaîne affichée pour l'objet lors du débogage
+
+class Paiement(db.Model):
+    """Trace chaque paiement Stripe réussi pour déverrouiller un projet."""
+    __tablename__ = 'paiements'
+    id                 = db.Column(db.Integer, primary_key=True)
+    projet_id          = db.Column(db.Integer, db.ForeignKey('projets.id'), nullable=False)
+    user_id            = db.Column(db.Integer, db.ForeignKey('users.id'),   nullable=False)
+    stripe_session_id  = db.Column(db.String(200), unique=True, nullable=False)  # ID session Stripe
+    montant_centimes   = db.Column(db.Integer, default=100)   # 100 = 1,00 €
+    statut             = db.Column(db.String(50), default='en_attente')  # en_attente | reussi | echec
+    created_at         = db.Column(db.DateTime, default=datetime.utcnow)
+
+    projet = db.relationship('Project', backref='paiements')
+    user   = db.relationship('User',    backref='paiements')
+
+    def __repr__(self):
+        return f'<Paiement projet={self.projet_id} statut={self.statut}>'
+
 
 from flask_login import UserMixin
 
 class User(UserMixin, db.Model):
-    __tablename__ = "users"
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    __tablename__ = 'users'
+    id            = db.Column(db.Integer, primary_key=True)
+    username      = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
 
     def set_password(self, password):

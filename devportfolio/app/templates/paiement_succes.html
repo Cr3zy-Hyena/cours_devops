@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Paiement réussi{% endblock %}
+{% block content %}
+
+<div class="paiement-succes">
+  <div class="paiement-icone">✅</div>
+  <h1>Paiement confirmé !</h1>
+  <p>
+    Votre accès au projet <strong>{{ projet.titre }}</strong> est maintenant actif.
+  </p>
+  <p class="paiement-note">
+    (Simulation Stripe en mode test — aucun vrai débit effectué)
+  </p>
+  <a href="{{ url_for('main.detail_projet', id=projet.id) }}" class="btn-payer">
+    Voir le projet déverrouillé →
+  </a>
+</div>
+
+{% endblock %}

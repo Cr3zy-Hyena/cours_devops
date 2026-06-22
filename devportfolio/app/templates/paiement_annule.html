@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Paiement annulé{% endblock %}
+{% block content %}
+
+<div class="paiement-annule">
+  <div class="paiement-icone">❌</div>
+  <h1>Paiement annulé</h1>
+  <p>Vous avez annulé le paiement. Le projet <strong>{{ projet.titre }}</strong> reste verrouillé.</p>
+  <div class="paiement-actions">
+    <a href="{{ url_for('main.payer', id=projet.id) }}" class="btn-payer">Réessayer</a>
+    <a href="{{ url_for('main.index') }}" class="btn-retour">← Retour à l'accueil</a>
+  </div>
+</div>
+
+{% endblock %}

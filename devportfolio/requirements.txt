@@ -9,4 +9,4 @@ pytest-cov==4.1.0
 python-json-logger==2.0.7
 prometheus-flask-exporter==0.23.0
 Flask-Login
-Werkzeug
+Werkzeugstripe
