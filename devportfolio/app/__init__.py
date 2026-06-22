@@ -53,4 +53,17 @@ def create_app(config=None):
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    # --- DEBUT DU BLOC DE CORRECTION POUR LA COLONNE MANQUANTE ---
+    with app.app_context():
+        try:
+            from sqlalchemy import text
+            # Tente d'ajouter la colonne 'verrouille' de force si elle n'existe pas déjà
+            db.session.execute(text("ALTER TABLE projets ADD COLUMN IF NOT EXISTS verrouille BOOLEAN DEFAULT FALSE;"))
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Note: Impossible d'ajouter la colonne (elle existe peut-être déjà) : {e}")
+    # --- FIN DU BLOC DE CORRECTION ---
+
     return app
