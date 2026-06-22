@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}{{ projet.titre }}{% endblock %}
+{% block content %}
+<a href='{{ url_for("main.index") }}'>&larr; Retour</a>
+<h1>{{ projet.titre }}</h1>
+<span class='badge badge-{{ projet.statut.replace("_","-") }}'>
+{{ projet.statut.replace('_',' ').title() }}
+</span>
+<p>{{ projet.description }}</p>
+<p>Technologies : {{ projet.technologies }}</p>
+
+{% if projet.verrouille and not deja_paye %}
+  {# ── Projet verrouillé — options de déverrouillage ── #}
+  <div class="projet-verrouille">
+    <p>🔒 Ce projet est verrouillé. Déverrouillez-le pour accéder au code source, à la démo et au lien GitHub.</p>
+
+    {# Bouton Stripe normal (1 €, carte de test 4242…) #}
+    <a href="{{ url_for('main.payer', id=projet.id) }}" class="btn-payer">
+      💳 Payer 1 € (test Stripe)
+    </a>
+
+    {% if test_free_mode %}
+    {# ── Mode test gratuit : 0 €, aucune carte ── #}
+    <form method="POST" action="{{ url_for('main.debloquer_test', id=projet.id) }}" style="display:inline;">
+      <button type="submit" class="btn-test-gratuit">
+        🧪 Débloquer gratuitement (mode test — 0 €)
+      </button>
+    </form>
+    <p class="test-note">
+      <small>⚠️ Mode test activé (<code>STRIPE_TEST_FREE=true</code>) — aucun paiement réel.</small>
+    </p>
+    {% endif %}
+  </div>
+
+{% elif projet.verrouille and deja_paye %}
+  {# ── Déjà payé — afficher le contenu déverrouillé ── #}
+  <div class="projet-deverrouille">
+    <p>✅ Accès déverrouillé</p>
+    {% if projet.url_github %}
+    <a href='{{ projet.url_github }}' target='_blank'>🔗 GitHub</a>
+    {% endif %}
+    {% if projet.url_demo %}
+    <a href='{{ projet.url_demo }}' target='_blank'>🚀 Démo</a>
+    {% endif %}
+  </div>
+
+{% else %}
+  {# ── Projet public ── #}
+  {% if projet.url_github %}
+  <a href='{{ projet.url_github }}' target='_blank'>GitHub</a>
+  {% endif %}
+{% endif %}
+
+<p>Date : {{ projet.created_at.strftime('%d/%m/%Y') }}</p>
+
+<button onclick="supprimerProjet({{ projet.id }})" class="btn-supprimer">Supprimer</button>
+
+<script>
+async function supprimerProjet(id) {
+  if (!confirm('Supprimer ce projet definitivement ?')) return;
+
+  const reponse = await fetch(`/api/projets/${id}`, { method: 'DELETE' });
+
+  if (reponse.ok) {
+    window.location.href = '/';
+  } else {
+    alert('Erreur lors de la suppression du projet.');
+  }
+}
+</script>
+{% endblock %}
