@@ -11,6 +11,9 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-dev-key}
       - FLASK_ENV=production
+    
+    env_file:
+      - .env
 
     depends_on:
       db:

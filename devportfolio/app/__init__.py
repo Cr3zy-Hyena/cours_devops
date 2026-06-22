@@ -3,6 +3,9 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from dotenv import load_dotenv
+
+load_dotenv()
 
 try:
     from prometheus_flask_exporter import PrometheusMetrics
