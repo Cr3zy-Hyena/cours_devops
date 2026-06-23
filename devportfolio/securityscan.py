@@ -123,6 +123,8 @@ debug_trouvé = chercher_dans_fichiers(
     exclure=["#", "TESTING"]
 )
 for chemin, ligne, contenu in debug_trouvé:
+    if 'securityscan.py' in chemin:
+        continue
     ajouter("CRITIQUE", "Config", f"debug=True en production → {chemin}:{ligne}",
             "Utiliser debug=False ou FLASK_ENV=production")
     print(f"  {R}[CRITIQUE]{RS} debug=True détecté — {chemin}:{ligne}")
