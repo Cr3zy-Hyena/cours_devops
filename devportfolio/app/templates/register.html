@@ -5,6 +5,7 @@
 <h2>Créer un compte</h2>
 
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <input type="text" name="username" required>
 
