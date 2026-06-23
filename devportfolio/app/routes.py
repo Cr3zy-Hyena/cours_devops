@@ -1,5 +1,6 @@
+import uuid
 import logging
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for, abort
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models import Project, User, Paiement
@@ -19,16 +20,11 @@ def index():
 @login_required
 def detail_projet(id):
     projet = Project.query.get_or_404(id)
-
-    # Vérifier si l'utilisateur a déjà payé pour ce projet
     deja_paye = False
     if projet.verrouille:
         deja_paye = Paiement.query.filter_by(
-            projet_id=id,
-            user_id=current_user.id,
-            statut='reussi'
+            projet_id=id, user_id=current_user.id, statut='reussi'
         ).first() is not None
-
     return render_template('detail.html', projet=projet, deja_paye=deja_paye)
 
 
@@ -80,44 +76,32 @@ def logout():
     return redirect(url_for('main.login'))
 
 
-# ── Paiement fictif (simulation interne) ──────────────────────────────────────
+# ── Paiement fictif ────────────────────────────────────────────────────────────
 
 @main.route('/projet/<int:id>/payer')
 @login_required
 def payer(id):
-    """Affiche le formulaire de paiement fictif."""
     projet = Project.query.get_or_404(id)
-
     if not projet.verrouille:
         return redirect(url_for('main.detail_projet', id=id))
-
-    # Déjà payé ?
     deja_paye = Paiement.query.filter_by(
         projet_id=id, user_id=current_user.id, statut='reussi'
     ).first()
     if deja_paye:
         return redirect(url_for('main.detail_projet', id=id))
-
     return render_template('paiement_fictif.html', projet=projet)
 
 
-@main.route('/projet/<int:id>/payer/confirmer', methods=['POST'])
+@main.route('/projet/<int:id>/debloquer', methods=['POST'])
 @login_required
-def payer_confirmer(id):
-    """Valide le paiement fictif — n'importe quelle carte est acceptée."""
+def debloquer_fictif(id):
+    """Reçoit le POST du formulaire fictif et valide le paiement."""
     projet = Project.query.get_or_404(id)
 
-    # Vérification minimale : le formulaire doit être rempli
-    carte = request.form.get('carte', '').replace(' ', '')
-    if len(carte) < 8:
-        return redirect(url_for('main.payer', id=id))
-
-    # Enregistrer le paiement comme réussi directement
-    import uuid
     paiement = Paiement(
         projet_id=id,
         user_id=current_user.id,
-        stripe_session_id=f'fictif_{uuid.uuid4().hex}',  # ID unique simulé
+        stripe_session_id=f'fictif_{uuid.uuid4().hex}',
         montant_centimes=100,
         statut='reussi',
     )
@@ -128,4 +112,11 @@ def payer_confirmer(id):
         'projet_id': id, 'user_id': current_user.id
     })
 
+    return jsonify({'redirect': url_for('main.paiement_succes', id=id)})
+
+
+@main.route('/projet/<int:id>/paiement/succes')
+@login_required
+def paiement_succes(id):
+    projet = Project.query.get_or_404(id)
     return render_template('paiement_succes.html', projet=projet)
