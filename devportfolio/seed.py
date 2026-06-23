@@ -12,11 +12,19 @@ def seed():
     projets = [Project(**data) for data in PROJETS_INITIAUX]
     db.session.add_all(projets)
     db.session.commit()
-    print(f'{len(projets)} projets insérés ({sum(1 for p in projets if p.verrouille)} verrouillé(s)).')
+    print(f'{len(projets)} projets insérés.')
 
 def seed_if_empty():
     if Project.query.count() == 0:
         seed()
+    else:
+        # Ajouter uniquement les projets manquants par titre
+        titres_existants = {p.titre for p in Project.query.all()}
+        for data in PROJETS_INITIAUX:
+            if data['titre'] not in titres_existants:
+                db.session.add(Project(**data))
+                print(f"Projet ajouté : {data['titre']}")
+        db.session.commit()
 
 if __name__ == '__main__':
     app = create_app()
