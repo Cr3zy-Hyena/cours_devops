@@ -3,6 +3,9 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,10 +16,12 @@ try:
 except ImportError:
     PrometheusMetrics = None
 
-
 db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = "main.login"
+csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address, default_limits=[])
+
 
 def create_app(config=None):
     app = Flask(__name__)
@@ -27,19 +32,22 @@ def create_app(config=None):
         'sqlite:///devportfolio.db'
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # CSRF désactivé en mode test uniquement
+    app.config['WTF_CSRF_ENABLED'] = os.getenv('FLASK_ENV') != 'testing'
 
     if config:
         app.config.update(config)
 
     from app.logger import setup_logging
-
     setup_logging(app)
+
     db.init_app(app)
     login_manager.init_app(app)
+    csrf.init_app(app)
+    limiter.init_app(app)
+
     if PrometheusMetrics:
-        registry = CollectorRegistry()  # registre isolé : évite les collisions
-                                         # quand create_app() est appelé plusieurs
-                                         # fois (ex: un nouvel objet app par test pytest)
+        registry = CollectorRegistry()
         metrics = PrometheusMetrics(app, registry=registry)
         metrics.info('app_info', 'Info', version='1.0', service='devportfolio')
 
@@ -48,22 +56,22 @@ def create_app(config=None):
 
     app.register_blueprint(api)
     app.register_blueprint(main)
+
     from app.models import User
 
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # --- DEBUT DU BLOC DE CORRECTION POUR LA COLONNE MANQUANTE ---
     with app.app_context():
         try:
             from sqlalchemy import text
-            # Tente d'ajouter la colonne 'verrouille' de force si elle n'existe pas déjà
-            db.session.execute(text("ALTER TABLE projets ADD COLUMN IF NOT EXISTS verrouille BOOLEAN DEFAULT FALSE;"))
+            db.session.execute(text(
+                "ALTER TABLE projets ADD COLUMN IF NOT EXISTS verrouille BOOLEAN DEFAULT FALSE;"
+            ))
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            print(f"Note: Impossible d'ajouter la colonne (elle existe peut-être déjà) : {e}")
-    # --- FIN DU BLOC DE CORRECTION ---
+            print(f"Note: colonne verrouille déjà existante : {e}")
 
     return app

@@ -5,25 +5,20 @@ services:
     build: .
     container_name: devportfolio-web
     restart: unless-stopped
-
     environment:
-      - DATABASE_URL=postgresql://devuser:devpass@db:5432/devportfolio
-      - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=${SECRET_KEY:-dev-key}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - SECRET_KEY=${SECRET_KEY}
       - FLASK_ENV=production
-    
     env_file:
       - .env
-
     depends_on:
       db:
         condition: service_healthy
-
     expose:
       - '5000'
     ports:
-      - '5000:5000'   # exposé à l'hôte pour curl http://localhost:5000/metrics
-
+      - '5000:5000'
     networks:
       - backend
 
@@ -39,10 +34,10 @@ services:
     image: grafana/grafana:10.2.0
     ports: ['3000:3000']
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-changeme}
     volumes:
       - grafdata:/var/lib/grafana
-      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro  # datasource + dashboard automatiques
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
     networks: [backend]
 
   nginx:
@@ -63,13 +58,13 @@ services:
     container_name: devportfolio-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: devuser
-      POSTGRES_PASSWORD: devpass
-      POSTGRES_DB: devportfolio
+      POSTGRES_USER: ${POSTGRES_USER:-devuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-devportfolio}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U devuser -d devportfolio']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-devuser} -d ${POSTGRES_DB:-devportfolio}']
       interval: 10s
       timeout: 5s
       retries: 5
