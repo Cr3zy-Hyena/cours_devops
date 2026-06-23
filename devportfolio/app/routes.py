@@ -1,9 +1,5 @@
-import os
-import stripe
 import logging
-
-from flask import (Blueprint, render_template, jsonify, request,
-                   redirect, url_for, abort, flash)
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from app.models import Project, User, Paiement
@@ -11,11 +7,6 @@ from app.models import Project, User, Paiement
 main = Blueprint('main', __name__)
 logger = logging.getLogger(__name__)
 
-# Stripe se configure depuis les variables d'environnement
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY', '')
-
-
-# ── Pages principales ──────────────────────────────────────────────────────────
 
 @main.route('/')
 @login_required
@@ -89,128 +80,52 @@ def logout():
     return redirect(url_for('main.login'))
 
 
-# ── Paiement Stripe ────────────────────────────────────────────────────────────
+# ── Paiement fictif (simulation interne) ──────────────────────────────────────
 
 @main.route('/projet/<int:id>/payer')
 @login_required
 def payer(id):
-    """Crée une session Stripe Checkout et redirige vers la page de paiement Stripe."""
+    """Affiche le formulaire de paiement fictif."""
     projet = Project.query.get_or_404(id)
 
     if not projet.verrouille:
-        # Projet déjà public, pas besoin de payer
         return redirect(url_for('main.detail_projet', id=id))
 
-    # Déjà payé par cet utilisateur ?
+    # Déjà payé ?
     deja_paye = Paiement.query.filter_by(
         projet_id=id, user_id=current_user.id, statut='reussi'
     ).first()
     if deja_paye:
         return redirect(url_for('main.detail_projet', id=id))
 
-    if not stripe.api_key:
-        abort(500, "Clé Stripe manquante — ajouter STRIPE_SECRET_KEY dans .env")
-
-    try:
-        # Création d'une session Stripe Checkout
-        # amount_total en centimes : 100 = 1,00 €
-        # En mode TEST, aucun vrai argent n'est débité
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'eur',
-                    'unit_amount': 100,          # 1,00 € (simulation — aucun vrai débit)
-                    'product_data': {
-                        'name': f'Déverrouillage — {projet.titre}',
-                        'description': 'Accès complet au projet : code source, démo, GitHub',
-                    },
-                },
-                'quantity': 1,
-            }],
-            mode='payment',
-            # URLs de retour après paiement
-            success_url=url_for('main.paiement_succes',
-                                id=id, _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=url_for('main.paiement_annule', id=id, _external=True),
-            # Métadonnées pour retrouver projet + user dans le webhook
-            metadata={
-                'projet_id': str(id),
-                'user_id':   str(current_user.id),
-            },
-            client_reference_id=str(current_user.id),
-        )
-
-        # On enregistre le paiement en attente avant la redirection
-        paiement = Paiement(
-            projet_id=id,
-            user_id=current_user.id,
-            stripe_session_id=session.id,
-            montant_centimes=100,
-            statut='en_attente',
-        )
-        db.session.add(paiement)
-        db.session.commit()
-
-        logger.info("Session Stripe créée", extra={
-            'session_id': session.id, 'projet_id': id, 'user_id': current_user.id
-        })
-
-        # Redirection vers la page Stripe hébergée
-        return redirect(session.url, code=303)
-
-    except stripe.error.StripeError as e:
-        logger.error("Erreur Stripe", exc_info=True)
-        abort(500, f"Erreur Stripe : {e.user_message}")
+    return render_template('paiement_fictif.html', projet=projet)
 
 
-@main.route('/projet/<int:id>/paiement/succes')
+@main.route('/projet/<int:id>/payer/confirmer', methods=['POST'])
 @login_required
-def paiement_succes(id):
-    """Stripe redirige ici après un paiement réussi."""
-    projet = Project.query.get_or_404(id)
-    session_id = request.args.get('session_id')
-
-    if not session_id:
-        abort(400, "Session ID manquant")
-
-    try:
-        # Vérification côté Stripe que le paiement est bien validé
-        session = stripe.checkout.Session.retrieve(session_id)
-
-        if session.payment_status == 'paid':
-            # Mettre à jour le paiement en base
-            paiement = Paiement.query.filter_by(
-                stripe_session_id=session_id
-            ).first()
-
-            if paiement and paiement.statut != 'reussi':
-                paiement.statut = 'reussi'
-                db.session.commit()
-                logger.info("Paiement validé", extra={
-                    'session_id': session_id, 'projet_id': id
-                })
-
-        return render_template('paiement_succes.html', projet=projet)
-
-    except stripe.error.StripeError as e:
-        logger.error("Erreur vérification Stripe", exc_info=True)
-        abort(500, f"Impossible de vérifier le paiement : {e.user_message}")
-
-
-@main.route('/projet/<int:id>/paiement/annule')
-@login_required
-def paiement_annule(id):
-    """Stripe redirige ici si l'utilisateur annule le paiement."""
+def payer_confirmer(id):
+    """Valide le paiement fictif — n'importe quelle carte est acceptée."""
     projet = Project.query.get_or_404(id)
 
-    # Marquer le paiement comme échoué / annulé
-    paiement = Paiement.query.filter_by(
-        projet_id=id, user_id=current_user.id, statut='en_attente'
-    ).order_by(Paiement.created_at.desc()).first()
+    # Vérification minimale : le formulaire doit être rempli
+    carte = request.form.get('carte', '').replace(' ', '')
+    if len(carte) < 8:
+        return redirect(url_for('main.payer', id=id))
 
-    if paiement:
-        paiement.statut = 'annule'
-        db.session.commit()
+    # Enregistrer le paiement comme réussi directement
+    import uuid
+    paiement = Paiement(
+        projet_id=id,
+        user_id=current_user.id,
+        stripe_session_id=f'fictif_{uuid.uuid4().hex}',  # ID unique simulé
+        montant_centimes=100,
+        statut='reussi',
+    )
+    db.session.add(paiement)
+    db.session.commit()
 
-    return render_template('paiement_annule.html', projet=projet)
+    logger.info("Paiement fictif validé", extra={
+        'projet_id': id, 'user_id': current_user.id
+    })
+
+    return render_template('paiement_succes.html', projet=projet)
