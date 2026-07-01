@@ -7,6 +7,13 @@ from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[]
+)
 
 load_dotenv()
 
@@ -73,5 +80,14 @@ def create_app(config=None):
         except Exception as e:
             db.session.rollback()
             print(f"Note: colonne verrouille déjà existante : {e}")
+    
+    limiter.init_app(app)
+    from flask import jsonify
+
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return jsonify({
+        "error": "Trop de tentatives. Réessayez dans une minute."
+    }), 429
 
     return app

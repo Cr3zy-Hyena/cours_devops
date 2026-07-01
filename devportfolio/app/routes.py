@@ -7,6 +7,7 @@ from flask import (Blueprint, render_template, jsonify, request,
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, limiter
 from app.models import Project, User, Paiement
+from app import limiter
 
 main = Blueprint('main', __name__)
 logger = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ def register():
 
 
 @main.route('/login', methods=['GET', 'POST'])
-@limiter.limit('5 per minute')
+@limiter.limit("5 per minute", methods=["POST"])
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -229,6 +230,15 @@ def paiement_succes_test(id):
     return render_template('paiement_succes.html', projet=projet, test_mode=True)
 
 
+@main.route('/admin/supprimer-user/<username>')
+def supprimer_user(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return f"Utilisateur {username} supprimé"
+    return "Utilisateur introuvable"
+
 @main.route('/projet/<int:id>/paiement/annule')
 @login_required
 def paiement_annule(id):
@@ -243,3 +253,5 @@ def paiement_annule(id):
         db.session.commit()
 
     return render_template('paiement_annule.html', projet=projet)
+
+

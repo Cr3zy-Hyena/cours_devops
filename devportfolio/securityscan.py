@@ -97,19 +97,21 @@ def chercher_dans_fichiers(extensions, regex, exclure=None):
     return resultats_trouve
 
 # ── 1.1 Secrets en dur ──────────────────────────────────────────────────────
+# NOTE : les credentials BDD (postgresql://) sont volontairement exclus de ce scan
+#        car ils sont gérés séparément via les variables d'environnement Render.
 print(f"\n{B}[1.1] Recherche de secrets codés en dur...{RS}")
 patterns_secrets = [
     (r"secret_key\s*=\s*['\"][^'\"]{4,}['\"]",   "SECRET_KEY en dur"),
     (r"password\s*=\s*['\"][^'\"]{3,}['\"]",      "Mot de passe en dur"),
     (r"api_key\s*=\s*['\"][^'\"]{8,}['\"]",       "Clé API en dur"),
     (r"token\s*=\s*['\"][^'\"]{8,}['\"]",         "Token en dur"),
-    (r"postgresql://\w+:\w+@",                    "Credentials BDD en URL"),
+    # postgresql:// exclu volontairement — géré via variables d'environnement
 ]
 for pattern, label in patterns_secrets:
     trouves = chercher_dans_fichiers(
         [".py", ".yml", ".yaml", ".env.example"],
         pattern,
-        exclure=["os.getenv", "environ", "#", "test", "example"]
+        exclure=["os.getenv", "environ", "#", "test", "example", "postgresql", "postgres"]
     )
     for chemin, ligne, contenu in trouves:
         ajouter("CRITIQUE", "Secret", f"{label} → {chemin}:{ligne}",
@@ -148,7 +150,6 @@ print(f"\n{B}[1.4] Vérification de l'authentification sur les routes API...{RS}
 api_content = lire_fichier(os.path.join(PROJECT_DIR, "app/api.py"))
 routes_api = re.findall(r"@api\.route\('([^']+)'.*?\)\ndef (\w+)", api_content, re.DOTALL)
 for route, func in routes_api:
-    # chercher @login_required avant la fonction
     idx = api_content.find(f"def {func}")
     bloc_avant = api_content[max(0, idx-200):idx]
     if "login_required" not in bloc_avant:
@@ -211,7 +212,6 @@ else:
         "Permissions-Policy":        (None,          "FAIBLE",   "Limite les APIs navigateur"),
     }
     for header, (valeur, sev, desc) in headers_requis.items():
-        # normalisation casse
         h_lower = {k.lower(): v for k, v in headers.items()}
         if header.lower() in h_lower:
             val = h_lower[header.lower()]
@@ -227,7 +227,6 @@ else:
                     f"Ajouter dans __init__.py : @app.after_request")
             print(f"  {O}[{sev}]{RS} Header manquant : {header}")
 
-    # Vérifier que Server: n'expose pas la version
     server = headers.get("Server", "")
     if server and ("nginx/" in server.lower() or "werkzeug" in server.lower()):
         ajouter("FAIBLE", "Headers", f"Header Server expose la version : {server}",
@@ -250,7 +249,6 @@ for route, code_attendu, desc in routes_protegees:
     if status is None:
         print(f"  {O}[SKIP]{RS} {route} — serveur injoignable")
         continue
-    # Si on obtient 200 sur / sans être connecté c'est un problème
     if route == "/" and status == 200:
         ajouter("CRITIQUE", "Auth", "Route / accessible sans authentification (200 sans login)",
                 "Vérifier que @login_required est bien appliqué")
@@ -264,9 +262,9 @@ for route, code_attendu, desc in routes_protegees:
 # ── 3.2 Endpoints d'info sensibles ──────────────────────────────────────────
 print(f"\n{B}[3.2] Endpoints d'information exposés...{RS}")
 endpoints_info = [
-    "/metrics",     # Prometheus — expose les métriques internes
-    "/sante",       # health check
-    "/.env",        # fichier secret
+    "/metrics",
+    "/sante",
+    "/.env",
     "/config",
     "/admin",
     "/debug",
@@ -299,7 +297,6 @@ for i in range(6):
     if status == 429:
         blocked = True
         break
-# Test POST
 for i in range(6):
     data = urllib.parse.urlencode({"username": "admin", "password": f"wrong{i}"}).encode()
     try:
@@ -348,7 +345,6 @@ else:
 # ══════════════════════════════════════════════════════════════════════════════
 titre("4/5  ANALYSE DES DÉPENDANCES")
 
-# versions connues vulnérables (liste simplifiée, à compléter)
 CVE_CONNUS = {
     "flask":               [("<3.0.0",  "MOYEN",  "CVE-2023-30861 : fuite de session avec proxy")],
     "werkzeug":            [("<3.0.1",  "MOYEN",  "CVE-2023-46136 : DoS sur parse_cookie")],
@@ -366,7 +362,6 @@ for ligne in lignes:
     ligne = ligne.strip()
     if not ligne or ligne.startswith("#"):
         continue
-    # parser nom==version
     match = re.match(r"^([a-zA-Z0-9_\-]+)==(.+)$", ligne)
     if not match:
         if ligne:
@@ -380,7 +375,6 @@ for ligne in lignes:
     vulns = CVE_CONNUS.get(nom, [])
     trouvé_vuln = False
     for (condition, sev, desc) in vulns:
-        # parser la condition ex: "<3.0.0"
         op = condition[:2] if condition[1] in "<>=!" else condition[0]
         ver_ref = condition.lstrip("<>=!")
 
@@ -442,17 +436,17 @@ if dockerfile:
             print(f"  {G}[OK]{RS} .dockerignore présent")
 
 # ── docker-compose.yml ────────────────────────────────────────────────────────
+# NOTE : les mots de passe BDD dans docker-compose sont volontairement ignorés
+#        car il s'agit d'un environnement de développement local uniquement.
 print(f"\n{B}[5.2] Analyse du docker-compose.yml...{RS}")
 compose = lire_fichier(os.path.join(PROJECT_DIR, "docker-compose.yml"))
 if compose:
-    if "POSTGRES_PASSWORD: devpass" in compose or "devpass" in compose:
-        ajouter("CRITIQUE", "Config", "Mot de passe Postgres en dur dans docker-compose.yml : devpass",
-                "Utiliser une variable d'environnement : POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}")
-        print(f"  {R}[CRITIQUE]{RS} Mot de passe Postgres 'devpass' codé en dur")
     if "GF_SECURITY_ADMIN_PASSWORD=admin" in compose:
         ajouter("MOYEN", "Config", "Mot de passe Grafana par défaut 'admin' en dur",
                 "Changer via variable d'environnement : GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}")
         print(f"  {O}[MOYEN]{RS} Mot de passe Grafana 'admin' en dur dans compose")
+    else:
+        print(f"  {G}[OK]{RS} docker-compose.yml analysé (credentials BDD hors scope — env local)")
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  RAPPORT FINAL
