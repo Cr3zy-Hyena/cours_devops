@@ -230,14 +230,6 @@ def paiement_succes_test(id):
     return render_template('paiement_succes.html', projet=projet, test_mode=True)
 
 
-@main.route('/admin/supprimer-user/<username>')
-def supprimer_user(username):
-    user = User.query.filter_by(username=username).first()
-    if user:
-        db.session.delete(user)
-        db.session.commit()
-        return f"Utilisateur {username} supprimé"
-    return "Utilisateur introuvable"
 
 @main.route('/projet/<int:id>/paiement/annule')
 @login_required
