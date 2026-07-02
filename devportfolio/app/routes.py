@@ -6,7 +6,7 @@ from flask import (Blueprint, render_template, jsonify, request,
                    redirect, url_for, abort, flash)
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, limiter
-from app.models import Project, User, Paiement
+from app.models import Project, User, Paiement, EmailVerificationToken, PasswordResetToken
 from app import limiter
 
 main = Blueprint('main', __name__)
@@ -56,17 +56,57 @@ def health_check():
 @main.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        existing = User.query.filter_by(username=username).first()
-        if existing:
-            return "Utilisateur déjà existant"
-        user = User(username=username)
+        username = request.form.get('username', '').strip()
+        email    = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+
+        if User.query.filter_by(username=username).first():
+            flash("Ce nom d'utilisateur est déjà pris.", "error")
+            return render_template('register.html')
+
+        if User.query.filter_by(email=email).first():
+            flash("Cette adresse email est déjà utilisée.", "error")
+            return render_template('register.html')
+
+        user = User(username=username, email=email, email_verifie=False)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-        return redirect(url_for('main.login'))
+
+        token_obj   = EmailVerificationToken.create_for_user(user)
+        confirm_url = url_for('main.confirmer_email', token=token_obj.token, _external=True)
+
+        logger.info("Inscription : lien de confirmation généré",
+                    extra={'user_id': user.id})
+
+        if os.getenv('FLASK_ENV') in ('development', 'testing', None):
+            flash(f"[DEV] Lien de confirmation : {confirm_url}", "dev")
+
+        flash("Compte créé ! Confirmez votre adresse email pour vous connecter.", "info")
+        return redirect(url_for('main.inscription_en_attente'))
+
     return render_template('register.html')
+
+
+@main.route('/inscription-en-attente')
+def inscription_en_attente():
+    return render_template('inscription_en_attente.html')
+
+
+@main.route('/confirmer-email/<token>')
+def confirmer_email(token):
+    token_obj = EmailVerificationToken.query.filter_by(token=token).first()
+
+    if not token_obj or not token_obj.is_valid:
+        flash("Ce lien de confirmation est invalide ou a expiré.", "error")
+        return redirect(url_for('main.login'))
+
+    token_obj.user.email_verifie = True
+    token_obj.used = True
+    db.session.commit()
+
+    flash("Adresse email confirmée ! Vous pouvez maintenant vous connecter.", "success")
+    return redirect(url_for('main.login'))
 
 
 @main.route('/login', methods=['GET', 'POST'])
@@ -76,10 +116,15 @@ def login():
         username = request.form['username']
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
+
         if user and user.check_password(password):
+            if not user.email_verifie:
+                flash("Veuillez confirmer votre adresse email avant de vous connecter.", "error")
+                return render_template('login.html')
             login_user(user)
             return redirect(url_for('main.index'))
-        return "Identifiants invalides"
+
+        flash("Identifiants invalides.", "error")
     return render_template('login.html')
 
 
@@ -247,3 +292,9 @@ def paiement_annule(id):
     return render_template('paiement_annule.html', projet=projet)
 
 
+#sqlite3 instance/devportfolio.db
+#-- Voir les utilisateurs
+#SELECT id, username FROM users;
+
+#-- Supprimer
+#DELETE FROM users WHERE username = 'nom_ici'
