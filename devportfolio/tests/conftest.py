@@ -26,13 +26,11 @@ def client(app):
 @pytest.fixture
 def auth_client(client, app):
     with app.app_context():
-        user = User(username='testuser')
+        user = User(username='testuser', email='test@example.com', email_verifie=True)
         user.set_password('testpass')
         db.session.add(user)
         db.session.commit()
-
-    # Le CSRF étant désactivé, ce POST passe directement
-    client.post('/login', data={'username': 'testuser', 'password': 'testpass'})
+        client.post('/login', data={'username': 'testuser', 'password': 'testpass'})
     return client
 
 
