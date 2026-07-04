@@ -329,6 +329,7 @@ def paiement_annule(id):
 
     return render_template('paiement_annule.html', projet=projet)
 
+
 @main.route('/admin/migration-email')
 def migration_email():
     from sqlalchemy import text
@@ -341,10 +342,12 @@ def migration_email():
         db.session.rollback()
         return f"Erreur (déjà fait ?) : {e}"
 
-
 #sqlite3 instance/devportfolio.db
 #-- Voir les utilisateurs
 #SELECT id, username FROM users;
 
 #-- Supprimer
 #DELETE FROM users WHERE username = 'nom_ici'
+
+#sortir
+# .quit
