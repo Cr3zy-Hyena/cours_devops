@@ -6,7 +6,7 @@ from flask import (Blueprint, render_template, jsonify, request,
                    redirect, url_for, abort, flash)
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, limiter
-from app.models import Project, User, Paiement
+from app.models import Project, User, Paiement, EmailVerificationToken, PasswordResetToken, SecurityQuestion
 from app import limiter
 
 main = Blueprint('main', __name__)
@@ -53,20 +53,58 @@ def health_check():
 
 # ── Authentification ───────────────────────────────────────────────────────────
 
+QUESTIONS_DISPONIBLES = [
+    "Quel est le prénom de votre mère ?",
+    "Quel est le nom de votre animal de compagnie d'enfance ?",
+    "Dans quelle ville êtes-vous né(e) ?",
+    "Quel est le prénom de votre meilleur(e) ami(e) d'enfance ?",
+    "Quel était le modèle de votre première voiture ?",
+    "Quel est le nom de votre école primaire ?",
+]
+
+
 @main.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        existing = User.query.filter_by(username=username).first()
-        if existing:
-            return "Utilisateur déjà existant"
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        q1 = request.form.get('question1', '')
+        r1 = request.form.get('reponse1', '').strip()
+        q2 = request.form.get('question2', '')
+        r2 = request.form.get('reponse2', '').strip()
+        q3 = request.form.get('question3', '')
+        r3 = request.form.get('reponse3', '').strip()
+
+        if User.query.filter_by(username=username).first():
+            flash("Ce nom d'utilisateur est déjà pris.", "error")
+            return render_template('register.html', questions=QUESTIONS_DISPONIBLES)
+
+        if not all([q1, r1, q2, r2, q3, r3]):
+            flash("Veuillez répondre aux 3 questions de sécurité.", "error")
+            return render_template('register.html', questions=QUESTIONS_DISPONIBLES)
+
+        if len({q1, q2, q3}) < 3:
+            flash("Veuillez choisir 3 questions différentes.", "error")
+            return render_template('register.html', questions=QUESTIONS_DISPONIBLES)
+
         user = User(username=username)
         user.set_password(password)
         db.session.add(user)
+        db.session.flush()
+
+        sq = SecurityQuestion(
+            user_id=user.id,
+            question1=q1, reponse1=r1,
+            question2=q2, reponse2=r2,
+            question3=q3, reponse3=r3,
+        )
+        db.session.add(sq)
         db.session.commit()
+
+        flash("Compte créé ! Vous pouvez vous connecter.", "success")
         return redirect(url_for('main.login'))
-    return render_template('register.html')
+
+    return render_template('register.html', questions=QUESTIONS_DISPONIBLES)
 
 
 @main.route('/login', methods=['GET', 'POST'])
@@ -79,8 +117,6 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             return redirect(url_for('main.index'))
-        return "Identifiants invalides"
-    return render_template('login.html')
 
 
 @main.route('/logout')
