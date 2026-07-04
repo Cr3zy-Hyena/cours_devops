@@ -134,6 +134,44 @@ def logout():
     logout_user()
     return redirect(url_for('main.login'))
 
+@main.route('/mot-de-passe-oublie', methods=['GET', 'POST'])
+@limiter.limit('5 per minute')
+def mot_de_passe_oublie():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        user = User.query.filter_by(username=username).first()
+        flash("Si ce compte existe, un lien de réinitialisation a été généré.", "info")
+        if user:
+            token_obj = PasswordResetToken.create_for_user(user)
+            reset_url = url_for('main.reinitialiser_mot_de_passe',
+                                token=token_obj.token, _external=True)
+            if os.getenv('FLASK_ENV') in ('development', 'testing', None):
+                flash(f"[DEV] Lien : {reset_url}", "dev")
+        return redirect(url_for('main.mot_de_passe_oublie'))
+    return render_template('mot_de_passe_oublie.html')
+
+
+@main.route('/reinitialiser/<token>', methods=['GET', 'POST'])
+def reinitialiser_mot_de_passe(token):
+    token_obj = PasswordResetToken.query.filter_by(token=token).first()
+    if not token_obj or not token_obj.is_valid:
+        flash("Ce lien est invalide ou a expiré.", "error")
+        return redirect(url_for('main.mot_de_passe_oublie'))
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        confirm  = request.form.get('confirm_password', '')
+        if len(password) < 8:
+            flash("Le mot de passe doit contenir au moins 8 caractères.", "error")
+            return render_template('reinitialiser_mot_de_passe.html', token=token)
+        if password != confirm:
+            flash("Les mots de passe ne correspondent pas.", "error")
+            return render_template('reinitialiser_mot_de_passe.html', token=token)
+        token_obj.user.set_password(password)
+        token_obj.used = True
+        db.session.commit()
+        flash("Mot de passe modifié avec succès.", "success")
+        return redirect(url_for('main.login'))
+    return render_template('reinitialiser_mot_de_passe.html', token=token)
 
 # ── Paiement ───────────────────────────────────────────────────────────────────
 
