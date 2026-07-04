@@ -85,23 +85,3 @@ footer { text-align:center; color:var(--muted); /* pied de page */
   background:#da3633; color:#fff; border:none; border-radius:6px;
   cursor:pointer; font-size:.9rem; }
 .btn-supprimer:hover { background:#f85149; }
-
-/* ── Messages flash ──────────────────────────────────────────────────── */
-.flash { padding:.75rem 1rem; border-radius:6px; margin-bottom:1rem;
-  font-size:.9rem; border:1px solid transparent; }
-.flash-info    { background:#1c3a5e; border-color:#388bfd; color:#cae8ff; }
-.flash-success { background:#1a3a2a; border-color:#56d364; color:#aff5b4; }
-.flash-error   { background:#3a1c1c; border-color:#f85149; color:#ffa198; }
-.flash-dev     { background:#2d2a1e; border-color:#e3b341; color:#f0d080;
-  font-family:monospace; font-size:.8rem; word-break:break-all; }
-
-/* ── Liens secondaires sous les formulaires auth ─────────────────────── */
-.auth-links { margin-top:1rem; font-size:.9rem; }
-.auth-links a { color:var(--accent, #388bfd); text-decoration:none; }
-.auth-links a:hover { text-decoration:underline; }
-
-/* ── Page confirmation email ─────────────────────────────────────────── */
-.confirm-box { text-align:center; margin-top:4rem; }
-.confirm-icone { font-size:4rem; margin-bottom:1rem; }
-.confirm-box h2 { margin-bottom:1rem; }
-.confirm-box p { color:var(--muted); margin-bottom:.5rem; }

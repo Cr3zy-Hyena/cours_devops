@@ -80,7 +80,6 @@ def create_app(config=None):
         except Exception as e:
             db.session.rollback()
             print(f"Note: colonne verrouille déjà existante : {e}")
-        db.create_all()
     
     limiter.init_app(app)
     from flask import jsonify

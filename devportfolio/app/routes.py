@@ -6,7 +6,7 @@ from flask import (Blueprint, render_template, jsonify, request,
                    redirect, url_for, abort, flash)
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, limiter
-from app.models import Project, User, Paiement, EmailVerificationToken, PasswordResetToken
+from app.models import Project, User, Paiement
 from app import limiter
 
 main = Blueprint('main', __name__)
@@ -56,57 +56,17 @@ def health_check():
 @main.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        email    = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
-
-        if User.query.filter_by(username=username).first():
-            flash("Ce nom d'utilisateur est déjà pris.", "error")
-            return render_template('register.html')
-
-        if User.query.filter_by(email=email).first():
-            flash("Cette adresse email est déjà utilisée.", "error")
-            return render_template('register.html')
-
-        user = User(username=username, email=email, email_verifie=False)
+        username = request.form['username']
+        password = request.form['password']
+        existing = User.query.filter_by(username=username).first()
+        if existing:
+            return "Utilisateur déjà existant"
+        user = User(username=username)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-
-        token_obj   = EmailVerificationToken.create_for_user(user)
-        confirm_url = url_for('main.confirmer_email', token=token_obj.token, _external=True)
-
-        logger.info("Inscription : lien de confirmation généré",
-                    extra={'user_id': user.id})
-
-        if os.getenv('FLASK_ENV') in ('development', 'testing', None):
-            flash(f"[DEV] Lien de confirmation : {confirm_url}", "dev")
-
-        flash("Compte créé ! Confirmez votre adresse email pour vous connecter.", "info")
-        return redirect(url_for('main.inscription_en_attente'))
-
-    return render_template('register.html')
-
-
-@main.route('/inscription-en-attente')
-def inscription_en_attente():
-    return render_template('inscription_en_attente.html')
-
-
-@main.route('/confirmer-email/<token>')
-def confirmer_email(token):
-    token_obj = EmailVerificationToken.query.filter_by(token=token).first()
-
-    if not token_obj or not token_obj.is_valid:
-        flash("Ce lien de confirmation est invalide ou a expiré.", "error")
         return redirect(url_for('main.login'))
-
-    token_obj.user.email_verifie = True
-    token_obj.used = True
-    db.session.commit()
-
-    flash("Adresse email confirmée ! Vous pouvez maintenant vous connecter.", "success")
-    return redirect(url_for('main.login'))
+    return render_template('register.html')
 
 
 @main.route('/login', methods=['GET', 'POST'])
@@ -116,15 +76,10 @@ def login():
         username = request.form['username']
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
-
         if user and user.check_password(password):
-            if not user.email_verifie:
-                flash("Veuillez confirmer votre adresse email avant de vous connecter.", "error")
-                return render_template('login.html')
             login_user(user)
             return redirect(url_for('main.index'))
-
-        flash("Identifiants invalides.", "error")
+        return "Identifiants invalides"
     return render_template('login.html')
 
 
@@ -134,44 +89,6 @@ def logout():
     logout_user()
     return redirect(url_for('main.login'))
 
-@main.route('/mot-de-passe-oublie', methods=['GET', 'POST'])
-@limiter.limit('5 per minute')
-def mot_de_passe_oublie():
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        user = User.query.filter_by(username=username).first()
-        flash("Si ce compte existe, un lien de réinitialisation a été généré.", "info")
-        if user:
-            token_obj = PasswordResetToken.create_for_user(user)
-            reset_url = url_for('main.reinitialiser_mot_de_passe',
-                                token=token_obj.token, _external=True)
-            if os.getenv('FLASK_ENV') in ('development', 'testing', None):
-                flash(f"[DEV] Lien : {reset_url}", "dev")
-        return redirect(url_for('main.mot_de_passe_oublie'))
-    return render_template('mot_de_passe_oublie.html')
-
-
-@main.route('/reinitialiser/<token>', methods=['GET', 'POST'])
-def reinitialiser_mot_de_passe(token):
-    token_obj = PasswordResetToken.query.filter_by(token=token).first()
-    if not token_obj or not token_obj.is_valid:
-        flash("Ce lien est invalide ou a expiré.", "error")
-        return redirect(url_for('main.mot_de_passe_oublie'))
-    if request.method == 'POST':
-        password = request.form.get('password', '')
-        confirm  = request.form.get('confirm_password', '')
-        if len(password) < 8:
-            flash("Le mot de passe doit contenir au moins 8 caractères.", "error")
-            return render_template('reinitialiser_mot_de_passe.html', token=token)
-        if password != confirm:
-            flash("Les mots de passe ne correspondent pas.", "error")
-            return render_template('reinitialiser_mot_de_passe.html', token=token)
-        token_obj.user.set_password(password)
-        token_obj.used = True
-        db.session.commit()
-        flash("Mot de passe modifié avec succès.", "success")
-        return redirect(url_for('main.login'))
-    return render_template('reinitialiser_mot_de_passe.html', token=token)
 
 # ── Paiement ───────────────────────────────────────────────────────────────────
 
@@ -330,24 +247,3 @@ def paiement_annule(id):
     return render_template('paiement_annule.html', projet=projet)
 
 
-@main.route('/admin/migration-email')
-def migration_email():
-    from sqlalchemy import text
-    try:
-        db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(120)"))
-        db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verifie BOOLEAN DEFAULT FALSE"))
-        db.session.commit()
-        return "Migration OK ✅"
-    except Exception as e:
-        db.session.rollback()
-        return f"Erreur : {e}"
-
-#sqlite3 instance/devportfolio.db
-#-- Voir les utilisateurs
-#SELECT id, username FROM users;
-
-#-- Supprimer
-#DELETE FROM users WHERE username = 'nom_ici'
-
-#sortir
-# .quit
