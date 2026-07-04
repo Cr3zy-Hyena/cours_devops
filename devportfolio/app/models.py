@@ -83,3 +83,32 @@ class SecurityQuestion(db.Model):
             self.reponse2.lower().strip() == r2.lower().strip() and
             self.reponse3.lower().strip() == r3.lower().strip()
         )
+
+class PasswordResetToken(db.Model):
+    __tablename__ = 'password_reset_tokens'
+    id         = db.Column(db.Integer, primary_key=True)
+    user_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    token      = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used       = db.Column(db.Boolean, default=False)
+
+    user = db.relationship('User', backref='reset_tokens')
+
+    @staticmethod
+    def create_for_user(user):
+        from datetime import datetime, timedelta
+        import secrets
+        PasswordResetToken.query.filter_by(user_id=user.id, used=False).update({'used': True})
+        token = PasswordResetToken(
+            user_id=user.id,
+            token=secrets.token_urlsafe(48),
+            expires_at=datetime.utcnow() + timedelta(hours=1),
+        )
+        db.session.add(token)
+        db.session.commit()
+        return token
+
+    @property
+    def is_valid(self):
+        from datetime import datetime
+        return not self.used and datetime.utcnow() < self.expires_at
