@@ -4,17 +4,51 @@
 
 <h2>Créer un compte</h2>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <p class="flash flash-{{ category }}">{{ message }}</p>
+  {% endfor %}
+{% endwith %}
+
 <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <input type="text" name="username" required>
+    <input type="text" name="username" placeholder="Nom d'utilisateur" required>
+    <input type="password" name="password" placeholder="Mot de passe" required>
 
-    <input type="password" name="password" required>
+    <hr>
+    <p><strong>Questions de sécurité</strong> — pour récupérer votre compte si vous oubliez votre mot de passe.</p>
 
-    <button type="submit">
-        Créer le compte
-    </button>
+    <label>Question 1</label>
+    <select name="question1" required>
+        <option value="">-- Choisir une question --</option>
+        {% for q in questions %}
+        <option value="{{ q }}">{{ q }}</option>
+        {% endfor %}
+    </select>
+    <input type="text" name="reponse1" placeholder="Votre réponse" required>
 
+    <label>Question 2</label>
+    <select name="question2" required>
+        <option value="">-- Choisir une question --</option>
+        {% for q in questions %}
+        <option value="{{ q }}">{{ q }}</option>
+        {% endfor %}
+    </select>
+    <input type="text" name="reponse2" placeholder="Votre réponse" required>
+
+    <label>Question 3</label>
+    <select name="question3" required>
+        <option value="">-- Choisir une question --</option>
+        {% for q in questions %}
+        <option value="{{ q }}">{{ q }}</option>
+        {% endfor %}
+    </select>
+    <input type="text" name="reponse3" placeholder="Votre réponse" required>
+
+    <button type="submit">Créer le compte</button>
 </form>
+
+<a href="{{ url_for('main.login') }}">Déjà un compte ? Se connecter</a>
 
 {% endblock %}

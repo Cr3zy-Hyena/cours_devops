@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Questions de sécurité</h2>
+<p>Répondez aux 3 questions pour réinitialiser votre mot de passe.</p>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <p class="flash flash-{{ category }}">{{ message }}</p>
+  {% endfor %}
+{% endwith %}
+
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>{{ sq.question1 }}</label>
+    <input type="text" name="reponse1" required>
+
+    <label>{{ sq.question2 }}</label>
+    <input type="text" name="reponse2" required>
+
+    <label>{{ sq.question3 }}</label>
+    <input type="text" name="reponse3" required>
+
+    <button type="submit">Vérifier</button>
+</form>
+
+<a href="{{ url_for('main.mot_de_passe_oublie') }}">← Retour</a>
+
+{% endblock %}

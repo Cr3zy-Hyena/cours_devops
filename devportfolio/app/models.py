@@ -63,3 +63,23 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+class SecurityQuestion(db.Model):
+    __tablename__ = 'security_questions'
+    id        = db.Column(db.Integer, primary_key=True)
+    user_id   = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    question1 = db.Column(db.String(200), nullable=False)
+    reponse1  = db.Column(db.String(255), nullable=False)
+    question2 = db.Column(db.String(200), nullable=False)
+    reponse2  = db.Column(db.String(255), nullable=False)
+    question3 = db.Column(db.String(200), nullable=False)
+    reponse3  = db.Column(db.String(255), nullable=False)
+
+    user = db.relationship('User', backref=db.backref('security_questions', uselist=False))
+
+    def verifier_reponses(self, r1, r2, r3):
+        return (
+            self.reponse1.lower().strip() == r1.lower().strip() and
+            self.reponse2.lower().strip() == r2.lower().strip() and
+            self.reponse3.lower().strip() == r3.lower().strip()
+        )
