@@ -334,13 +334,13 @@ def paiement_annule(id):
 def migration_email():
     from sqlalchemy import text
     try:
-        db.session.execute(text("ALTER TABLE users ADD COLUMN email VARCHAR(120)"))
-        db.session.execute(text("ALTER TABLE users ADD COLUMN email_verifie BOOLEAN DEFAULT 0"))
+        db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(120)"))
+        db.session.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verifie BOOLEAN DEFAULT FALSE"))
         db.session.commit()
         return "Migration OK ✅"
     except Exception as e:
         db.session.rollback()
-        return f"Erreur (déjà fait ?) : {e}"
+        return f"Erreur : {e}"
 
 #sqlite3 instance/devportfolio.db
 #-- Voir les utilisateurs
