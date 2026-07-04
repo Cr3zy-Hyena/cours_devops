@@ -19,32 +19,38 @@
     <hr>
     <p><strong>Questions de sécurité</strong> — pour récupérer votre compte si vous oubliez votre mot de passe.</p>
 
-    <label>Question 1</label>
-    <select name="question1" required>
-        <option value="">-- Choisir une question --</option>
-        {% for q in questions %}
-        <option value="{{ q }}">{{ q }}</option>
-        {% endfor %}
-    </select>
-    <input type="text" name="reponse1" placeholder="Votre réponse" required>
+    <div>
+        <label>Question 1</label><br>
+        <select name="question1" required>
+            <option value="">-- Choisir une question --</option>
+            {% for q in questions %}
+            <option value="{{ q }}">{{ q }}</option>
+            {% endfor %}
+        </select><br>
+        <input type="text" name="reponse1" placeholder="Votre réponse" required>
+    </div>
 
-    <label>Question 2</label>
-    <select name="question2" required>
-        <option value="">-- Choisir une question --</option>
-        {% for q in questions %}
-        <option value="{{ q }}">{{ q }}</option>
-        {% endfor %}
-    </select>
-    <input type="text" name="reponse2" placeholder="Votre réponse" required>
+    <div>
+        <label>Question 2</label><br>
+        <select name="question2" required>
+            <option value="">-- Choisir une question --</option>
+            {% for q in questions %}
+            <option value="{{ q }}">{{ q }}</option>
+            {% endfor %}
+        </select><br>
+        <input type="text" name="reponse2" placeholder="Votre réponse" required>
+    </div>
 
-    <label>Question 3</label>
-    <select name="question3" required>
-        <option value="">-- Choisir une question --</option>
-        {% for q in questions %}
-        <option value="{{ q }}">{{ q }}</option>
-        {% endfor %}
-    </select>
-    <input type="text" name="reponse3" placeholder="Votre réponse" required>
+    <div>
+        <label>Question 3</label><br>
+        <select name="question3" required>
+            <option value="">-- Choisir une question --</option>
+            {% for q in questions %}
+            <option value="{{ q }}">{{ q }}</option>
+            {% endfor %}
+        </select><br>
+        <input type="text" name="reponse3" placeholder="Votre réponse" required>
+    </div>
 
     <button type="submit">Créer le compte</button>
 </form>

@@ -86,21 +86,3 @@ footer { text-align:center; color:var(--muted); /* pied de page */
   cursor:pointer; font-size:.9rem; }
 .btn-supprimer:hover { background:#f85149; }
 
-/* ── Formulaire register ─────────────────────────────────────────────── */
-form input, form select, form button {
-    display: block;
-    width: 100%;
-    margin-bottom: .75rem;
-    box-sizing: border-box;
-}
-
-form label {
-    display: block;
-    margin-bottom: .25rem;
-    font-weight: bold;
-}
-
-form hr {
-    margin: 1.5rem 0;
-    border-color: var(--border, #333);
-}
