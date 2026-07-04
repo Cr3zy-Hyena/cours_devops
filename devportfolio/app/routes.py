@@ -45,6 +45,10 @@ def detail_projet(id):
 def a_propos():
     return render_template('a_propos.html')
 
+@main.route('/chatbot')
+@login_required
+def chatbot():
+    return render_template('chatbot.html')
 
 @main.route('/sante')
 def health_check():

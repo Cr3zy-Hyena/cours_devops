@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Chatbot – DevPortfolio{% endblock %}
+
+{% block content %}
+
+<h2>Chatbot</h2>
+<p>Choisissez une question pour obtenir une réponse.</p>
+
+<div id="chat-container">
+    <div id="messages"></div>
+
+    <div id="suggestions">
+        <button onclick="poserQuestion('Qu\'est-ce que DevPortfolio ?')">Qu'est-ce que DevPortfolio ?</button>
+        <button onclick="poserQuestion('Comment créer un projet ?')">Comment créer un projet ?</button>
+        <button onclick="poserQuestion('Comment débloquer un projet ?')">Comment débloquer un projet ?</button>
+        <button onclick="poserQuestion('Comment changer mon mot de passe ?')">Comment changer mon mot de passe ?</button>
+        <button onclick="poserQuestion('Comment contacter le support ?')">Comment contacter le support ?</button>
+        <button onclick="poserQuestion('Comment fonctionne le paiement ?')">Comment fonctionne le paiement ?</button>
+    </div>
+</div>
+
+<style>
+#chat-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+#messages {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 200px;
+}
+
+.message-user {
+    align-self: flex-end;
+    background: #1c3a5e;
+    color: #cae8ff;
+    padding: .75rem 1rem;
+    border-radius: 12px 12px 0 12px;
+    max-width: 80%;
+}
+
+.message-bot {
+    align-self: flex-start;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    padding: .75rem 1rem;
+    border-radius: 12px 12px 12px 0;
+    border: 1px solid #333;
+    max-width: 80%;
+}
+
+#suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+#suggestions button {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    border: 1px solid #388bfd;
+    border-radius: 8px;
+    padding: .6rem 1rem;
+    cursor: pointer;
+    text-align: left;
+    font-size: .9rem;
+    transition: background .2s;
+}
+
+#suggestions button:hover {
+    background: #1c3a5e;
+    color: #cae8ff;
+}
+</style>
+
+<script>
+const reponses = {
+    "Qu'est-ce que DevPortfolio ?": "DevPortfolio est une plateforme qui vous permet de présenter vos projets de développement, de les partager et de les monétiser via un système de paiement intégré.",
+    "Comment créer un projet ?": "Une fois connecté, rendez-vous sur la page d'accueil et cliquez sur 'Nouveau projet'. Renseignez le titre, la description, les technologies utilisées et les liens GitHub/démo.",
+    "Comment débloquer un projet ?": "Certains projets sont verrouillés et nécessitent un paiement pour accéder à leur contenu complet. Cliquez sur 'Débloquer' sur la page du projet et suivez les étapes de paiement.",
+    "Comment changer mon mot de passe ?": "Si vous avez oublié votre mot de passe, cliquez sur 'Mot de passe oublié' sur la page de connexion. Vous devrez répondre à vos 3 questions de sécurité pour le réinitialiser.",
+    "Comment contacter le support ?": "Pour toute question, vous pouvez nous contacter via la page 'À propos' ou directement par email à support@devportfolio.com.",
+    "Comment fonctionne le paiement ?": "Le paiement est sécurisé et traité via Stripe. Une fois le paiement effectué, le contenu du projet est débloqué définitivement pour votre compte.",
+};
+
+function poserQuestion(question) {
+    const messages = document.getElementById('messages');
+
+    const msgUser = document.createElement('div');
+    msgUser.className = 'message-user';
+    msgUser.textContent = question;
+    messages.appendChild(msgUser);
+
+    setTimeout(() => {
+        const msgBot = document.createElement('div');
+        msgBot.className = 'message-bot';
+        msgBot.textContent = reponses[question] || "Je n'ai pas de réponse à cette question.";
+        messages.appendChild(msgBot);
+        messages.scrollTop = messages.scrollHeight;
+    }, 400);
+
+    messages.scrollTop = messages.scrollHeight;
+}
+</script>
+
+{% endblock %}
