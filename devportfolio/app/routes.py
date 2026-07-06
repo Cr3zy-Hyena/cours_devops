@@ -3,7 +3,7 @@ import uuid
 import logging
 
 from flask import (Blueprint, render_template, jsonify, request,
-                   redirect, url_for, abort, flash)
+                   redirect, url_for, abort, flash, session)
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, limiter
 from app.models import Project, User, Paiement, PasswordResetToken, SecurityQuestion, MessageSupport
@@ -45,6 +45,9 @@ def detail_projet(id):
 def a_propos():
     return render_template('a_propos.html')
 
+CONSEILLER_CODE = os.getenv('CONSEILLER_CODE')
+
+
 @main.route('/chatbot', methods=['GET', 'POST'])
 @login_required
 def chatbot():
@@ -67,8 +70,58 @@ def chatbot():
         user_id=current_user.id
     ).order_by(MessageSupport.created_at.desc()).limit(10).all()
 
+    mode_conseiller = session.get('conseiller', False)
+    tous_les_messages = None
+    if mode_conseiller:
+        tous_les_messages = MessageSupport.query.order_by(
+            MessageSupport.lu.asc(),
+            MessageSupport.created_at.desc()
+        ).all()
+
     return render_template('chatbot.html', disponible=disponible,
-                           mes_messages=mes_messages)
+                           mes_messages=mes_messages,
+                           mode_conseiller=mode_conseiller,
+                           tous_les_messages=tous_les_messages)
+
+
+@main.route('/chatbot/conseiller', methods=['POST'])
+@login_required
+@limiter.limit("5 per minute")
+def chatbot_conseiller_login():
+    code = request.form.get('code_conseiller', '')
+    if CONSEILLER_CODE and code == CONSEILLER_CODE:
+        session['conseiller'] = True
+        flash("Mode conseiller activé.", "success")
+    else:
+        flash("Code secret incorrect.", "error")
+    return redirect(url_for('main.chatbot'))
+
+
+@main.route('/chatbot/conseiller/quitter', methods=['POST'])
+@login_required
+def chatbot_conseiller_logout():
+    session.pop('conseiller', None)
+    flash("Mode conseiller désactivé.", "success")
+    return redirect(url_for('main.chatbot'))
+
+
+@main.route('/chatbot/repondre/<int:msg_id>', methods=['POST'])
+@login_required
+def chatbot_repondre(msg_id):
+    if not session.get('conseiller'):
+        abort(403)
+    from datetime import datetime
+    msg = MessageSupport.query.get_or_404(msg_id)
+    reponse = request.form.get('reponse', '').strip()
+    if reponse:
+        msg.reponse = reponse
+        msg.lu = True
+        msg.repondu_at = datetime.utcnow()
+        db.session.commit()
+        flash("Réponse envoyée !", "success")
+    return redirect(url_for('main.chatbot'))
+
+
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
 
 

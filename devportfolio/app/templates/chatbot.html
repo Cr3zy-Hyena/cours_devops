@@ -22,16 +22,52 @@
 
 <hr>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <p class="flash flash-{{ category }}">{{ message }}</p>
+  {% endfor %}
+{% endwith %}
+
+{% if mode_conseiller %}
+<div style="display:flex;justify-content:space-between;align-items:center;">
+    <h3>Espace conseiller — tous les messages</h3>
+    <form method="POST" action="{{ url_for('main.chatbot_conseiller_logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" style="background:#21262d;border:1px solid #f85149;color:#f85149;">Quitter le mode conseiller</button>
+    </form>
+</div>
+
+{% if tous_les_messages %}
+    {% for msg in tous_les_messages %}
+    <div style="background:#1a1a2e;border:1px solid {% if msg.reponse %}#56d364{% else %}#e3b341{% endif %};border-radius:8px;padding:1rem;margin-bottom:1rem;">
+        <p style="color:#aaa;font-size:.8rem;">
+            De : <strong>{{ msg.user.username }}</strong> — {{ msg.created_at.strftime('%d/%m/%Y %H:%M') }}
+            {% if msg.reponse %}<span style="color:#56d364"> ✅ Répondu</span>{% else %}<span style="color:#e3b341"> ⏳ En attente</span>{% endif %}
+        </p>
+        <p><strong>Message :</strong> {{ msg.contenu }}</p>
+        {% if msg.reponse %}
+            <p style="color:#56d364;margin-top:.5rem;"><strong>Votre réponse :</strong> {{ msg.reponse }}</p>
+            <p style="color:#aaa;font-size:.8rem;">Répondu le {{ msg.repondu_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        {% else %}
+        <form method="POST" action="{{ url_for('main.chatbot_repondre', msg_id=msg.id) }}" style="margin-top:.75rem;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <textarea name="reponse" placeholder="Votre réponse..." rows="3" required
+                style="width:100%;padding:.75rem;border-radius:8px;border:1px solid #333;background:#0d1117;color:#e0e0e0;resize:vertical;"></textarea><br><br>
+            <button type="submit">Répondre</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+{% else %}
+    <p>Aucun message pour l'instant.</p>
+{% endif %}
+
+{% else %}
+
 <h3>Contacter un conseiller</h3>
 
 {% if disponible %}
     <p style="color:#56d364">🟢 Un conseiller est disponible (12h–22h). Envoyez votre message :</p>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for category, message in messages %}
-        <p class="flash flash-{{ category }}">{{ message }}</p>
-      {% endfor %}
-    {% endwith %}
 
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -60,41 +96,18 @@
 {% endfor %}
 {% endif %}
 
-<style>
-#chat-container { max-width:600px; margin:2rem auto; display:flex; flex-direction:column; gap:1.5rem; }
-#messages { display:flex; flex-direction:column; gap:1rem; min-height:200px; }
-.message-user { align-self:flex-end; background:#1c3a5e; color:#cae8ff; padding:.75rem 1rem; border-radius:12px 12px 0 12px; max-width:80%; }
-.message-bot { align-self:flex-start; background:#1a1a2e; color:#e0e0e0; padding:.75rem 1rem; border-radius:12px 12px 12px 0; border:1px solid #333; max-width:80%; }
-#suggestions { display:flex; flex-direction:column; gap:.5rem; }
-#suggestions button { background:#1a1a2e; color:#e0e0e0; border:1px solid #388bfd; border-radius:8px; padding:.6rem 1rem; cursor:pointer; text-align:left; font-size:.9rem; transition:background .2s; }
-#suggestions button:hover { background:#1c3a5e; color:#cae8ff; }
-</style>
+<hr>
+<details style="margin-top:1rem;">
+    <summary style="cursor:pointer;color:#8b949e;font-size:.85rem;">Espace conseiller</summary>
+    <form method="POST" action="{{ url_for('main.chatbot_conseiller_login') }}" style="margin-top:.75rem;max-width:320px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="password" name="code_conseiller" placeholder="Code secret" required autocomplete="off"
+            style="width:100%;padding:.6rem;border-radius:8px;border:1px solid #333;background:#1a1a2e;color:#e0e0e0;">
+        <br><br>
+        <button type="submit">Se connecter en tant que conseiller</button>
+    </form>
+</details>
 
-<script>
-const reponses = {
-    "Qu'est-ce que DevPortfolio ?": "DevPortfolio est une plateforme qui vous permet de présenter vos projets de développement, de les partager et de les monétiser via un système de paiement intégré.",
-    "Comment créer un projet ?": "Une fois connecté, rendez-vous sur la page d'accueil et cliquez sur 'Nouveau projet'. Renseignez le titre, la description, les technologies utilisées et les liens GitHub/démo.",
-    "Comment débloquer un projet ?": "Certains projets sont verrouillés et nécessitent un paiement pour accéder à leur contenu complet. Cliquez sur 'Débloquer' sur la page du projet et suivez les étapes de paiement.",
-    "Comment changer mon mot de passe ?": "Si vous avez oublié votre mot de passe, cliquez sur 'Mot de passe oublié' sur la page de connexion. Vous devrez répondre à vos 3 questions de sécurité pour le réinitialiser.",
-    "Comment contacter le support ?": "Le support humain est disponible de 12h à 22h. Utilisez le formulaire ci-dessous pour envoyer un message directement à un conseiller.",
-    "Comment fonctionne le paiement ?": "Le paiement est sécurisé et traité via Stripe. Une fois le paiement effectué, le contenu du projet est débloqué définitivement pour votre compte.",
-};
-
-function poserQuestion(question) {
-    const messages = document.getElementById('messages');
-    const msgUser = document.createElement('div');
-    msgUser.className = 'message-user';
-    msgUser.textContent = question;
-    messages.appendChild(msgUser);
-    setTimeout(() => {
-        const msgBot = document.createElement('div');
-        msgBot.className = 'message-bot';
-        msgBot.textContent = reponses[question] || "Je n'ai pas de réponse à cette question.";
-        messages.appendChild(msgBot);
-        messages.scrollTop = messages.scrollHeight;
-    }, 400);
-    messages.scrollTop = messages.scrollHeight;
-}
-</script>
+{% endif %}
 
 {% endblock %}
