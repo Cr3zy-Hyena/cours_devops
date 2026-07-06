@@ -152,27 +152,40 @@ def admin_repondre(msg_id):
         db.session.commit()
         flash("Réponse envoyée !", "success")
     return redirect(url_for('main.admin_support'))
-
 @main.route("/api/chatbot", methods=["POST"])
 @login_required
 def api_chatbot():
-    question = request.json.get("question")
+
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({"reponse": "Requête invalide"}), 400
+
+    question = data.get("question", "")
 
     reponses = {
         "Qu'est-ce que DevPortfolio ?":
             "DevPortfolio est une plateforme de gestion de projets.",
+
         "Comment créer un projet ?":
-            "Cliquez sur Créer un projet.",
+            "Cliquez sur « Créer un projet » puis remplissez le formulaire.",
+
         "Comment débloquer un projet ?":
-            "Effectuez le paiement du projet.",
+            "Il suffit d'effectuer le paiement du projet.",
+
         "Comment changer mon mot de passe ?":
-            "Utilisez Mot de passe oublié.",
+            "Utilisez la page « Mot de passe oublié ».",
+
         "Comment contacter le support ?":
-            "Utilisez le formulaire ci-dessous.",
+            "Vous pouvez envoyer un message au conseiller ci-dessous.",
+
         "Comment fonctionne le paiement ?":
             "Le paiement est réalisé via Stripe."
     }
-    return jsonify({"reponse": reponses.get(question, "Je ne connais pas cette question.")})
+
+    return jsonify({
+        "reponse": reponses.get(question, "Je ne connais pas cette question.")
+    })
 
 @main.route('/sante')
 def health_check():
