@@ -1,6 +1,6 @@
 import pytest
 from app import create_app, db
-from app.models import Project, User
+from app.models import Project, User, MessageSupport
 
 
 @pytest.fixture
