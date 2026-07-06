@@ -112,3 +112,17 @@ class PasswordResetToken(db.Model):
     def is_valid(self):
         from datetime import datetime
         return not self.used and datetime.utcnow() < self.expires_at
+
+    class MessageSupport(db.Model):
+        """Message envoyé par un utilisateur au support"""
+        __tablename__ = 'messages_support'
+        id          = db.Column(db.Integer, primary_key=True)
+        user_id     = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+        contenu     = db.Column(db.Text, nullable=False)
+        reponse     = db.Column(db.Text, nullable=True)
+        lu          = db.Column(db.Boolean, default=False)
+        created_at  = db.Column(db.DateTime, default= datetime.utcnow)
+        repondu_at  = db.Column(db.DateTime, nullable=True)
+
+        user = db.relationship('User', backref='messages_support')
+        

@@ -6,7 +6,7 @@ from flask import (Blueprint, render_template, jsonify, request,
                    redirect, url_for, abort, flash)
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, limiter
-from app.models import Project, User, Paiement, PasswordResetToken, SecurityQuestion
+from app.models import Project, User, Paiement, PasswordResetToken, SecurityQuestion, MessageSupport
 from app import limiter
 
 main = Blueprint('main', __name__)
@@ -45,10 +45,60 @@ def detail_projet(id):
 def a_propos():
     return render_template('a_propos.html')
 
-@main.route('/chatbot')
+@main.route('/chatbot', methods=['GET', 'POST'])
 @login_required
 def chatbot():
-    return render_template('chatbot.html')
+    from datetime import datetime
+    heure = datetime.now().hour
+    disponible = 12 <= heure < 22
+
+    if request.method == 'POST':
+        contenu = request.form.get('contenu', '').strip()
+        if contenu and disponible:
+            msg = MessageSupport(user_id=current_user.id, contenu=contenu)
+            db.session.add(msg)
+            db.session.commit()
+            flash("Votre message a été envoyé au support !", "success")
+        elif not disponible:
+            flash("Le support n'est disponible qu'entre 12h et 22h.", "error")
+        return redirect(url_for('main.chatbot'))
+
+    mes_messages = MessageSupport.query.filter_by(
+        user_id=current_user.id
+    ).order_by(MessageSupport.created_at.desc()).limit(10).all()
+
+    return render_template('chatbot.html', disponible=disponible,
+                           mes_messages=mes_messages)
+ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
+
+
+@main.route('/admin/support')
+@login_required
+def admin_support():
+    if current_user.username != ADMIN_USERNAME:
+        abort(403)
+    messages = MessageSupport.query.order_by(
+        MessageSupport.lu.asc(),
+        MessageSupport.created_at.desc()
+    ).all()
+    return render_template('admin_support.html', messages=messages)
+
+
+@main.route('/admin/support/repondre/<int:msg_id>', methods=['POST'])
+@login_required
+def admin_repondre(msg_id):
+    if current_user.username != ADMIN_USERNAME:
+        abort(403)
+    from datetime import datetime
+    msg = MessageSupport.query.get_or_404(msg_id)
+    reponse = request.form.get('reponse', '').strip()
+    if reponse:
+        msg.reponse = reponse
+        msg.lu = True
+        msg.repondu_at = datetime.utcnow()
+        db.session.commit()
+        flash("Réponse envoyée !", "success")
+    return redirect(url_for('main.admin_support'))
 
 @main.route('/sante')
 def health_check():

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Support – DevPortfolio{% endblock %}
+
+{% block content %}
+
+<h2>Interface Support Admin</h2>
+<p>Messages reçus des utilisateurs.</p>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <p class="flash flash-{{ category }}">{{ message }}</p>
+  {% endfor %}
+{% endwith %}
+
+{% if messages_support %}
+{% for msg in messages %}
+<div style="background:#1a1a2e;border:1px solid {% if msg.reponse %}#56d364{% else %}#e3b341{% endif %};border-radius:8px;padding:1rem;margin-bottom:1.5rem;">
+    <p style="color:#aaa;font-size:.8rem;">
+        De : <strong>{{ msg.user.username }}</strong> — {{ msg.created_at.strftime('%d/%m/%Y %H:%M') }}
+        {% if msg.reponse %}<span style="color:#56d364"> ✅ Répondu</span>{% else %}<span style="color:#e3b341"> ⏳ En attente</span>{% endif %}
+    </p>
+    <p><strong>Message :</strong> {{ msg.contenu }}</p>
+
+    {% if msg.reponse %}
+        <p style="color:#56d364;margin-top:.5rem;"><strong>Votre réponse :</strong> {{ msg.reponse }}</p>
+    {% else %}
+    <form method="POST" action="{{ url_for('main.admin_repondre', msg_id=msg.id) }}" style="margin-top:.75rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <textarea name="reponse" placeholder="Votre réponse..." rows="3" required
+            style="width:100%;padding:.75rem;border-radius:8px;border:1px solid #333;background:#0d1117;color:#e0e0e0;resize:vertical;"></textarea><br><br>
+        <button type="submit">Répondre</button>
+    </form>
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<p>Aucun message pour l'instant.</p>
+{% endif %}
+
+{% endblock %}

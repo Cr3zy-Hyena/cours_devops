@@ -20,63 +20,54 @@
     </div>
 </div>
 
+<hr>
+
+<h3>Contacter un conseiller</h3>
+
+{% if disponible %}
+    <p style="color:#56d364">🟢 Un conseiller est disponible (12h–22h). Envoyez votre message :</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <p class="flash flash-{{ category }}">{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <textarea name="contenu" placeholder="Votre message..." rows="4" required
+            style="width:100%;padding:.75rem;border-radius:8px;border:1px solid #333;background:#1a1a2e;color:#e0e0e0;resize:vertical;"></textarea><br><br>
+        <button type="submit">Envoyer au support</button>
+    </form>
+{% else %}
+    <p style="color:#f85149">🔴 Le support humain est disponible uniquement de <strong>12h à 22h</strong>.</p>
+{% endif %}
+
+{% if mes_messages %}
+<hr>
+<h3>Mes échanges avec le support</h3>
+{% for msg in mes_messages %}
+<div style="background:#1a1a2e;border:1px solid #333;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+    <p style="color:#aaa;font-size:.8rem;">{{ msg.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+    <p><strong>Vous :</strong> {{ msg.contenu }}</p>
+    {% if msg.reponse %}
+        <p style="color:#56d364;margin-top:.5rem;"><strong>Support :</strong> {{ msg.reponse }}</p>
+        <p style="color:#aaa;font-size:.8rem;">Répondu le {{ msg.repondu_at.strftime('%d/%m/%Y %H:%M') }}</p>
+    {% else %}
+        <p style="color:#e3b341;font-size:.85rem;">⏳ En attente de réponse...</p>
+    {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
 <style>
-#chat-container {
-    max-width: 600px;
-    margin: 2rem auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-#messages {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    min-height: 200px;
-}
-
-.message-user {
-    align-self: flex-end;
-    background: #1c3a5e;
-    color: #cae8ff;
-    padding: .75rem 1rem;
-    border-radius: 12px 12px 0 12px;
-    max-width: 80%;
-}
-
-.message-bot {
-    align-self: flex-start;
-    background: #1a1a2e;
-    color: #e0e0e0;
-    padding: .75rem 1rem;
-    border-radius: 12px 12px 12px 0;
-    border: 1px solid #333;
-    max-width: 80%;
-}
-
-#suggestions {
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
-}
-
-#suggestions button {
-    background: #1a1a2e;
-    color: #e0e0e0;
-    border: 1px solid #388bfd;
-    border-radius: 8px;
-    padding: .6rem 1rem;
-    cursor: pointer;
-    text-align: left;
-    font-size: .9rem;
-    transition: background .2s;
-}
-
-#suggestions button:hover {
-    background: #1c3a5e;
-    color: #cae8ff;
-}
+#chat-container { max-width:600px; margin:2rem auto; display:flex; flex-direction:column; gap:1.5rem; }
+#messages { display:flex; flex-direction:column; gap:1rem; min-height:200px; }
+.message-user { align-self:flex-end; background:#1c3a5e; color:#cae8ff; padding:.75rem 1rem; border-radius:12px 12px 0 12px; max-width:80%; }
+.message-bot { align-self:flex-start; background:#1a1a2e; color:#e0e0e0; padding:.75rem 1rem; border-radius:12px 12px 12px 0; border:1px solid #333; max-width:80%; }
+#suggestions { display:flex; flex-direction:column; gap:.5rem; }
+#suggestions button { background:#1a1a2e; color:#e0e0e0; border:1px solid #388bfd; border-radius:8px; padding:.6rem 1rem; cursor:pointer; text-align:left; font-size:.9rem; transition:background .2s; }
+#suggestions button:hover { background:#1c3a5e; color:#cae8ff; }
 </style>
 
 <script>
@@ -85,18 +76,16 @@ const reponses = {
     "Comment créer un projet ?": "Une fois connecté, rendez-vous sur la page d'accueil et cliquez sur 'Nouveau projet'. Renseignez le titre, la description, les technologies utilisées et les liens GitHub/démo.",
     "Comment débloquer un projet ?": "Certains projets sont verrouillés et nécessitent un paiement pour accéder à leur contenu complet. Cliquez sur 'Débloquer' sur la page du projet et suivez les étapes de paiement.",
     "Comment changer mon mot de passe ?": "Si vous avez oublié votre mot de passe, cliquez sur 'Mot de passe oublié' sur la page de connexion. Vous devrez répondre à vos 3 questions de sécurité pour le réinitialiser.",
-    "Comment contacter le support ?": "Pour toute question, vous pouvez nous contacter via la page 'À propos' ou directement par email à support@devportfolio.com.",
+    "Comment contacter le support ?": "Le support humain est disponible de 12h à 22h. Utilisez le formulaire ci-dessous pour envoyer un message directement à un conseiller.",
     "Comment fonctionne le paiement ?": "Le paiement est sécurisé et traité via Stripe. Une fois le paiement effectué, le contenu du projet est débloqué définitivement pour votre compte.",
 };
 
 function poserQuestion(question) {
     const messages = document.getElementById('messages');
-
     const msgUser = document.createElement('div');
     msgUser.className = 'message-user';
     msgUser.textContent = question;
     messages.appendChild(msgUser);
-
     setTimeout(() => {
         const msgBot = document.createElement('div');
         msgBot.className = 'message-bot';
@@ -104,7 +93,6 @@ function poserQuestion(question) {
         messages.appendChild(msgBot);
         messages.scrollTop = messages.scrollHeight;
     }, 400);
-
     messages.scrollTop = messages.scrollHeight;
 }
 </script>
