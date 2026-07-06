@@ -108,6 +108,47 @@
     </form>
 </details>
 
+<script>
+async function poserQuestion(question) {
+
+    const messages = document.getElementById("messages");
+
+    // Affiche la question
+    messages.innerHTML += `
+        <p><strong>Vous :</strong> ${question}</p>
+    `;
+
+    try {
+        const res = await fetch("/api/chatbot", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                question: question
+            })
+        });
+
+        const data = await res.json();
+
+        messages.innerHTML += `
+            <p style="color:#56d364">
+                <strong>Chatbot :</strong> ${data.reponse}
+            </p>
+        `;
+
+    } catch (err) {
+        messages.innerHTML += `
+            <p style="color:#f85149">
+                Impossible de contacter le chatbot.
+            </p>
+        `;
+    }
+
+    messages.scrollTop = messages.scrollHeight;
+}
+</script>
+
 {% endif %}
 
 {% endblock %}
