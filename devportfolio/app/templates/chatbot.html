@@ -1,141 +1,38 @@
-{% extends "base.html" %}
-
-{% block title %}Chatbot – DevPortfolio{% endblock %}
-
-{% block content %}
-
 <h2>Chatbot</h2>
-<p>Choisissez une question pour obtenir une réponse.</p>
+<p>Retrouvez ci-dessous les questions les plus fréquemment posées.</p>
 
-<div id="chat-container">
-    <div id="messages"></div>
+<div style="display:flex;flex-direction:column;gap:15px;margin-top:20px;">
 
-    <div id="suggestions">
-        <button onclick="poserQuestion('Qu\'est-ce que DevPortfolio ?')">Qu'est-ce que DevPortfolio ?</button>
-        <button onclick="poserQuestion('Comment créer un projet ?')">Comment créer un projet ?</button>
-        <button onclick="poserQuestion('Comment débloquer un projet ?')">Comment débloquer un projet ?</button>
-        <button onclick="poserQuestion('Comment changer mon mot de passe ?')">Comment changer mon mot de passe ?</button>
-        <button onclick="poserQuestion('Comment contacter le support ?')">Comment contacter le support ?</button>
-        <button onclick="poserQuestion('Comment fonctionne le paiement ?')">Comment fonctionne le paiement ?</button>
+    <div style="background:#1a1a2e;padding:15px;border-radius:8px;border:1px solid #333;">
+        <h4>❓ Qu'est-ce que DevPortfolio ?</h4>
+        <p>DevPortfolio est une plateforme permettant de consulter, partager et gérer des projets de développement informatique.</p>
     </div>
-</div>
 
-<hr>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% for category, message in messages %}
-    <p class="flash flash-{{ category }}">{{ message }}</p>
-  {% endfor %}
-{% endwith %}
-
-{% if mode_conseiller %}
-<div style="display:flex;justify-content:space-between;align-items:center;">
-    <h3>Espace conseiller — tous les messages</h3>
-    <form method="POST" action="{{ url_for('main.chatbot_conseiller_logout') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" style="background:#21262d;border:1px solid #f85149;color:#f85149;">Quitter le mode conseiller</button>
-    </form>
-</div>
-
-{% if tous_les_messages %}
-    {% for msg in tous_les_messages %}
-    <div style="background:#1a1a2e;border:1px solid {% if msg.reponse %}#56d364{% else %}#e3b341{% endif %};border-radius:8px;padding:1rem;margin-bottom:1rem;">
-        <p style="color:#aaa;font-size:.8rem;">
-            De : <strong>{{ msg.user.username }}</strong> — {{ msg.created_at.strftime('%d/%m/%Y %H:%M') }}
-            {% if msg.reponse %}<span style="color:#56d364"> ✅ Répondu</span>{% else %}<span style="color:#e3b341"> ⏳ En attente</span>{% endif %}
-        </p>
-        <p><strong>Message :</strong> {{ msg.contenu }}</p>
-        {% if msg.reponse %}
-            <p style="color:#56d364;margin-top:.5rem;"><strong>Votre réponse :</strong> {{ msg.reponse }}</p>
-            <p style="color:#aaa;font-size:.8rem;">Répondu le {{ msg.repondu_at.strftime('%d/%m/%Y %H:%M') }}</p>
-        {% else %}
-        <form method="POST" action="{{ url_for('main.chatbot_repondre', msg_id=msg.id) }}" style="margin-top:.75rem;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <textarea name="reponse" placeholder="Votre réponse..." rows="3" required
-                style="width:100%;padding:.75rem;border-radius:8px;border:1px solid #333;background:#0d1117;color:#e0e0e0;resize:vertical;"></textarea><br><br>
-            <button type="submit">Répondre</button>
-        </form>
-        {% endif %}
+    <div style="background:#1a1a2e;padding:15px;border-radius:8px;border:1px solid #333;">
+        <h4>❓ Comment créer un projet ?</h4>
+        <p>Depuis la page d'accueil, cliquez sur <strong>Créer un projet</strong>, remplissez les informations demandées puis validez.</p>
     </div>
-    {% endfor %}
-{% else %}
-    <p>Aucun message pour l'instant.</p>
-{% endif %}
 
-{% else %}
+    <div style="background:#1a1a2e;padding:15px;border-radius:8px;border:1px solid #333;">
+        <h4>❓ Comment débloquer un projet ?</h4>
+        <p>Cliquez sur le projet verrouillé puis effectuez le paiement. Le contenu sera immédiatement accessible.</p>
+    </div>
 
-<h3>Contacter un conseiller</h3>
+    <div style="background:#1a1a2e;padding:15px;border-radius:8px;border:1px solid #333;">
+        <h4>❓ Comment changer mon mot de passe ?</h4>
+        <p>Depuis la page de connexion, cliquez sur <strong>Mot de passe oublié</strong> puis répondez à vos questions de sécurité.</p>
+    </div>
 
-{% if disponible %}
-    <p style="color:#56d364">🟢 Un conseiller est disponible (12h–22h). Envoyez votre message :</p>
+    <div style="background:#1a1a2e;padding:15px;border-radius:8px;border:1px solid #333;">
+        <h4>❓ Comment contacter le support ?</h4>
+        <p>Utilisez le formulaire situé plus bas sur cette page. Un conseiller vous répondra dès que possible.</p>
+    </div>
 
-    <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <textarea name="contenu" placeholder="Votre message..." rows="4" required
-            style="width:100%;padding:.75rem;border-radius:8px;border:1px solid #333;background:#1a1a2e;color:#e0e0e0;resize:vertical;"></textarea><br><br>
-        <button type="submit">Envoyer au support</button>
-    </form>
-{% else %}
-    <p style="color:#f85149">🔴 Le support humain est disponible uniquement de <strong>12h à 22h</strong>.</p>
-{% endif %}
+    <div style="background:#1a1a2e;padding:15px;border-radius:8px;border:1px solid #333;">
+        <h4>❓ Comment fonctionne le paiement ?</h4>
+        <p>Le paiement permet de débloquer les projets premium. Une fois validé, l'accès est immédiat.</p>
+    </div>
 
-{% if mes_messages %}
-<hr>
-<h3>Mes échanges avec le support</h3>
-{% for msg in mes_messages %}
-<div style="background:#1a1a2e;border:1px solid #333;border-radius:8px;padding:1rem;margin-bottom:1rem;">
-    <p style="color:#aaa;font-size:.8rem;">{{ msg.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
-    <p><strong>Vous :</strong> {{ msg.contenu }}</p>
-    {% if msg.reponse %}
-        <p style="color:#56d364;margin-top:.5rem;"><strong>Support :</strong> {{ msg.reponse }}</p>
-        <p style="color:#aaa;font-size:.8rem;">Répondu le {{ msg.repondu_at.strftime('%d/%m/%Y %H:%M') }}</p>
-    {% else %}
-        <p style="color:#e3b341;font-size:.85rem;">⏳ En attente de réponse...</p>
-    {% endif %}
 </div>
-{% endfor %}
-{% endif %}
 
 <hr>
-<details style="margin-top:1rem;">
-    <summary style="cursor:pointer;color:#8b949e;font-size:.85rem;">Espace conseiller</summary>
-    <form method="POST" action="{{ url_for('main.chatbot_conseiller_login') }}" style="margin-top:.75rem;max-width:320px;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="password" name="code_conseiller" placeholder="Code secret" required autocomplete="off"
-            style="width:100%;padding:.6rem;border-radius:8px;border:1px solid #333;background:#1a1a2e;color:#e0e0e0;">
-        <br><br>
-        <button type="submit">Se connecter en tant que conseiller</button>
-    </form>
-</details>
-
-<script>
-async function poserQuestion(question){
-
-    const messages = document.getElementById("messages");
-
-    messages.innerHTML += `<p><strong>Vous :</strong> ${question}</p>`;
-
-    const res = await fetch("/api/chatbot",{
-        method:"POST",
-        headers:{
-            "Accept":"application/json",
-            "Content-Type":"application/json"
-        },
-        credentials:"same-origin",
-        body:JSON.stringify({
-            question:question
-        })
-    });
-
-    const data = await res.json();
-
-    messages.innerHTML += `
-        <p style="color:#56d364">
-            <strong>Chatbot :</strong> ${data.reponse}
-        </p>
-    `;
-}
-</script>
-{% endif %}
-
-{% endblock %}
