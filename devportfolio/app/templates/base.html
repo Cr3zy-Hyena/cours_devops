@@ -2,11 +2,13 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}DevPortfolio{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <nav>
+        <a href="{{ url_for('main.index') }}" class="logo">&lt;/&gt; DevPortfolio</a>
         <a href="{{ url_for('main.index') }}">Accueil</a>
         <a href="{{ url_for('main.a_propos') }}">À propos</a>
         <a href="{{ url_for('main.chatbot') }}">Chatbot</a>

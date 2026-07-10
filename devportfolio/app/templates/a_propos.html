@@ -4,7 +4,14 @@
 
 {% block content %}
 <h1>À propos</h1>
-<p>Bienvenue sur le DevPortfolio.</p>
-<p>Cette application présente des projets et utilise Flask avec SQLAlchemy.</p>
-<p><a href="{{ url_for('main.index') }}">Retour à l'accueil</a></p>
+<div class="carte a-propos-carte">
+  <p>Bienvenue sur <strong>DevPortfolio</strong>, une vitrine de projets développés
+  avec Flask et SQLAlchemy pour présenter du code, des démos et des liens GitHub.</p>
+  <ul class="a-propos-liste">
+    <li>🐍 Backend Flask + SQLAlchemy</li>
+    <li>🔒 Authentification et projets déverrouillables</li>
+    <li>💳 Paiement de test via Stripe</li>
+  </ul>
+  <a href="{{ url_for('main.index') }}" class="btn-payer">← Retour à l'accueil</a>
+</div>
 {% endblock %}

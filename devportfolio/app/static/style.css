@@ -86,3 +86,41 @@ footer { text-align:center; color:var(--muted); /* pied de page */
   cursor:pointer; font-size:.9rem; }
 .btn-supprimer:hover { background:#f85149; }
 
+/* ── Logo nav ─────────────────────────────────────────────────────────── */
+.logo { font-weight:bold; color:var(--accent) !important; text-decoration:none; }
+
+/* ── Formulaires (login / register) ──────────────────────────────────── */
+form { display:flex; flex-direction:column; gap:.9rem; max-width:380px; margin-top:1rem; }
+form input, form select { background:var(--surface); border:1px solid var(--border);
+  color:var(--text); padding:.7rem .9rem; border-radius:6px; font-size:.95rem; }
+form input:focus, form select:focus { outline:none; border-color:var(--accent); }
+form button, .btn-test-gratuit { background:var(--accent); color:#fff; border:none;
+  padding:.75rem 1.2rem; border-radius:6px; font-weight:bold; cursor:pointer; font-size:.95rem; }
+form button:hover, .btn-test-gratuit:hover { background:#388bfd; }
+form hr { border-color:var(--border); margin:.5rem 0; width:100%; }
+form label { font-size:.85rem; color:var(--muted); }
+
+/* ── Messages flash ───────────────────────────────────────────────────── */
+.flash { padding:.7rem 1rem; border-radius:6px; margin-bottom:1rem; font-size:.9rem; max-width:380px; }
+.flash-success { background:#1a3a1a; color:#56d364; border:1px solid var(--green); }
+.flash-error, .flash-danger { background:#3a1a1a; color:#f85149; border:1px solid #da3633; }
+.flash-warning { background:#3a2f1a; color:var(--orange); border:1px solid var(--orange); }
+.flash-info { background:#132a3a; color:var(--accent); border:1px solid var(--accent); }
+
+/* ── Projet verrouillé / déverrouillé (detail.html) ──────────────────── */
+.projet-verrouille, .projet-deverrouille { background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:1.5rem; margin-top:1rem; }
+.projet-verrouille a, .projet-deverrouille a { margin-right:1rem; color:var(--accent); }
+
+/* ── Page À propos ────────────────────────────────────────────────────── */
+.a-propos-carte { margin-top:1.5rem; max-width:600px; }
+.a-propos-liste { list-style:none; margin:1rem 0; }
+.a-propos-liste li { padding:.3rem 0; color:var(--muted); }
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width:640px) {
+  nav { flex-wrap:wrap; padding:1rem; gap:1rem; }
+  main { padding:0 1rem; }
+  .grille { grid-template-columns:1fr; }
+  form, .flash { max-width:100%; }
+}
